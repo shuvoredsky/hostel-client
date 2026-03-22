@@ -3,6 +3,12 @@ import { IUser } from "./auth.types";
 export type ListingType = "ROOM" | "SEAT" | "BASHA";
 export type ListingStatus = "PENDING" | "APPROVED" | "REJECTED";
 
+export interface IListingImage {
+  id: string;
+  url: string;
+  listingId: string;
+}
+
 export interface IListing {
   id: string;
   title: string;
@@ -14,14 +20,15 @@ export interface IListing {
   city: string;
   totalRooms: number;
   totalSeats: number;
-  images: string[];
+  images: IListingImage[];
   status: ListingStatus;
   isAvailable: boolean;
+  isDeleted: boolean;
   ownerId: string;
-  owner: Pick<IUser, "id" | "name" | "email" | "avatar" | "phone">;
-  averageRating?: number;
-  totalReviews?: number;
-  totalBookings?: number;
+  owner: Pick<IUser, "id" | "name" | "email">;
+  avgRating: number;
+  totalReviews: number;
+  isWishlisted?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -33,6 +40,7 @@ export interface IListingFilters {
   city?: string;
   minPrice?: number;
   maxPrice?: number;
+  isAvailable?: boolean;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   page?: number;
