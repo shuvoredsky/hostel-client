@@ -27,7 +27,7 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
 
@@ -71,7 +71,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // Rule-5: Protected route এ না থাকলে login এ redirect
+    // Rule-5: Protected route এ login না থাকলে redirect
     if (!isValidAccessToken) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
@@ -98,7 +98,7 @@ export async function middleware(request: NextRequest) {
 
     return NextResponse.next();
   } catch (error) {
-    console.error("Middleware error:", error);
+    console.error("Proxy error:", error);
     return NextResponse.next();
   }
 }

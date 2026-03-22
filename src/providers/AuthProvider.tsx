@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
 import { IUser } from "@/types/auth.types";
 import { getMe } from "@/services/auth.services";
 
@@ -21,6 +27,7 @@ export default function AuthProvider({
 }) {
   const [user, setUser] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const hasFetched = useRef(false);
 
   const fetchUser = async () => {
     try {
@@ -28,6 +35,8 @@ export default function AuthProvider({
       const response = await getMe();
       if (response?.data) {
         setUser(response.data);
+      } else {
+        setUser(null);
       }
     } catch {
       setUser(null);
@@ -37,6 +46,8 @@ export default function AuthProvider({
   };
 
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
     fetchUser();
   }, []);
 

@@ -4,7 +4,16 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, MapPin, ArrowRight, Star, Users, Home, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  MapPin,
+  ArrowRight,
+  Star,
+  Users,
+  Home,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { IBanner } from "@/services/settings.services";
@@ -16,7 +25,13 @@ const stats = [
   { icon: MapPin, label: "Areas", value: "20+" },
 ];
 
-const popularAreas = ["Mirpur", "Dhanmondi", "Mohammadpur", "Uttara", "Bashundhara"];
+const popularAreas = [
+  "Mirpur",
+  "Dhanmondi",
+  "Mohammadpur",
+  "Uttara",
+  "Bashundhara",
+];
 
 interface HeroBannerProps {
   banners: IBanner[];
@@ -66,7 +81,6 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
                 className="object-cover"
                 priority
               />
-              {/* Dark overlay */}
               <div className="absolute inset-0 bg-slate-900/70" />
             </motion.div>
           </AnimatePresence>
@@ -118,19 +132,14 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
         <div className="text-center">
           {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-2 mb-6"
-          >
+          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-2 mb-6">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-emerald-400 text-sm font-medium">
               #1 Student Housing Platform in Dhaka
             </span>
-          </motion.div>
+          </div>
 
-          {/* Banner Title or Default Heading */}
+          {/* Heading */}
           <AnimatePresence mode="wait">
             <motion.h1
               key={hasBanners ? currentIndex : "default"}
@@ -155,23 +164,13 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
           </AnimatePresence>
 
           {/* Subheading */}
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-slate-300 text-lg sm:text-xl max-w-2xl mx-auto mb-10"
-          >
+          <p className="text-slate-300 text-lg sm:text-xl max-w-2xl mx-auto mb-10">
             Browse hundreds of verified rooms, seats, and apartments near your
             university. Safe, affordable, and student-friendly.
-          </motion.p>
+          </p>
 
           {/* Search Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center gap-3 max-w-2xl mx-auto mb-10"
-          >
+          <div className="flex flex-col sm:flex-row items-center gap-3 max-w-2xl mx-auto mb-10">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input
@@ -190,15 +189,10 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
               Search Now
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
-          </motion.div>
+          </div>
 
           {/* Popular Areas */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex flex-wrap items-center justify-center gap-2 mb-16"
-          >
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-16">
             <span className="text-slate-400 text-sm">Popular:</span>
             {popularAreas.map((area) => (
               <Link
@@ -210,15 +204,10 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
                 {area}
               </Link>
             ))}
-          </motion.div>
+          </div>
 
           {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto"
-          >
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto">
             {stats.map((stat) => (
               <div
                 key={stat.label}
@@ -231,7 +220,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
                 <div className="text-xs text-slate-400">{stat.label}</div>
               </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
 
