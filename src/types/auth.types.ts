@@ -7,7 +7,7 @@ export interface IUser {
   email: string;
   role: UserRole;
   status: UserStatus;
-  avatar?: string;
+  image?: string; 
   phone?: string;
   isEmailVerified: boolean;
   createdAt: string;

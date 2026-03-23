@@ -29,7 +29,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/providers/AuthProvider";
-import { logout } from "@/services/auth.services";
+import { logout } from "@/services/auth.client.services";
 import { toast } from "sonner";
 import { getDefaultDashboardRoute } from "@/lib/authUtils";
 import { cn } from "@/lib/utils";
@@ -140,10 +140,10 @@ export default function Navbar({ logo }: NavbarProps) {
                 <DropdownMenuTrigger>
                   <div className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <Avatar className="w-8 h-8">
-                      <AvatarImage src={user.avatar} />
-                      <AvatarFallback className="bg-emerald-600 text-white text-xs">
-                        {user.name?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
+                      <AvatarImage src={user.image} />
+<AvatarFallback className="bg-emerald-600 text-white text-xs">
+  {user.name?.charAt(0).toUpperCase()}
+</AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
                       {user.name?.split(" ")[0]}

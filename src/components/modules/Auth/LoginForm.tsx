@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginSchema, LoginInput } from "@/zod/auth.validation";
-import { login } from "@/services/auth.services";
+import { login } from "@/services/auth.client.services";
 import { useAuth } from "@/providers/AuthProvider";
 import { getDefaultDashboardRoute } from "@/lib/authUtils";
 
@@ -32,27 +32,29 @@ export default function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginInput) => {
-    try {
-      setIsLoading(true);
-      const response = await login(data);
+const onSubmit = async (data: LoginInput) => {
+  try {
+    setIsLoading(true);
+    const response = await login(data);
 
-      if (response?.data) {
-        await refetchUser();
-        toast.success("Logged in successfully!");
-
-        const user = response.data;
-        const dashboardRoute = getDefaultDashboardRoute(user.role);
-        router.push(redirect || dashboardRoute);
-      }
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "Invalid email or password";
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
+    if (response?.data) {
+      // আগে refetchUser call করো
+      await refetchUser();
+      toast.success("Logged in successfully!");
+      
+      // তারপর redirect করো
+      const dashboardRoute = getDefaultDashboardRoute(response.data.role);
+      router.push(redirect || dashboardRoute);
+      router.refresh(); // ← এই line add করো
     }
-  };
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message || "Invalid email or password";
+    toast.error(message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <motion.div

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { registerSchema, RegisterInput } from "@/zod/auth.validation";
-import { registerStudent, registerOwner } from "@/services/auth.services";
+import { registerStudent, registerOwner } from "@/services/auth.client.services";
 import { useAuth } from "@/providers/AuthProvider";
 import { getDefaultDashboardRoute } from "@/lib/authUtils";
 import { cn } from "@/lib/utils";

@@ -3,59 +3,13 @@
 import { httpClient } from "@/lib/httpClient";
 import { IUser } from "@/types/auth.types";
 import {
-  ILoginInput,
-  IRegisterInput,
   IChangePasswordInput,
   IForgotPasswordInput,
   IResetPasswordInput,
   IVerifyEmailInput,
 } from "@/types/auth.types";
 
-export const registerStudent = async (payload: IRegisterInput) => {
-  try {
-    const response = await httpClient.post<IUser>(
-      "/auth/register/student",
-      payload
-    );
-    return response;
-  } catch (error) {
-    console.error("Error registering student:", error);
-    throw error;
-  }
-};
-
-export const registerOwner = async (payload: IRegisterInput) => {
-  try {
-    const response = await httpClient.post<IUser>(
-      "/auth/register/owner",
-      payload
-    );
-    return response;
-  } catch (error) {
-    console.error("Error registering owner:", error);
-    throw error;
-  }
-};
-
-export const login = async (payload: ILoginInput) => {
-  try {
-    const response = await httpClient.post<IUser>("/auth/login", payload);
-    return response;
-  } catch (error) {
-    console.error("Error logging in:", error);
-    throw error;
-  }
-};
-
-export const logout = async () => {
-  try {
-    const response = await httpClient.post<null>("/auth/logout", {});
-    return response;
-  } catch (error) {
-    console.error("Error logging out:", error);
-    throw error;
-  }
-};
+// ─── Server Side Only ─────────────────────────────────────────────────────────
 
 export const getMe = async () => {
   try {
@@ -63,16 +17,6 @@ export const getMe = async () => {
     return response;
   } catch (error) {
     console.error("Error fetching user:", error);
-    throw error;
-  }
-};
-
-export const refreshToken = async () => {
-  try {
-    const response = await httpClient.post<null>("/auth/refresh-token", {});
-    return response;
-  } catch (error) {
-    console.error("Error refreshing token:", error);
     throw error;
   }
 };
