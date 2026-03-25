@@ -1,6 +1,12 @@
 "use server";
 
+import axios from "axios";
 import { httpClient } from "@/lib/httpClient";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+if (!API_BASE_URL) {
+  throw new Error("API_BASE_URL is not defined in environment variables");
+}
 
 export interface IBanner {
   id: string;
@@ -30,8 +36,17 @@ export interface IUpdateBannerInput {
 
 export const getSiteSettings = async () => {
   try {
-    const response = await httpClient.get<ISiteSettings>("/settings");
-    return response;
+    const response = await axios.get<{
+      success: boolean;
+      message: string;
+      data: ISiteSettings;
+    }>(`${API_BASE_URL}/settings`);
+
+    return {
+      data: response.data.data,
+      success: response.data.success,
+      message: response.data.message,
+    };
   } catch (error) {
     console.error("Error fetching site settings:", error);
     throw error;

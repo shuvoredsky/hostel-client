@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import LoginForm from "@/components/modules/Auth/LoginForm";
 import { Home } from "lucide-react";
 import Link from "next/link";
@@ -17,7 +18,9 @@ export default function LoginPage() {
               Dhaka<span className="text-emerald-600">Stay</span>
             </span>
           </Link>
-          <LoginForm />
+          <Suspense fallback={<div className="text-center py-8">Loading form...</div>}>
+            <LoginForm />
+          </Suspense>
         </div>
       </div>
 

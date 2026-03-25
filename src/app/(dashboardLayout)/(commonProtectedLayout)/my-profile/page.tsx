@@ -10,10 +10,8 @@ import {
   AlertCircle,
   Building,
   GraduationCap,
-  Settings,
 } from "lucide-react";
-import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import ChangePasswordButton from "./ChangePasswordButton";
 import { cn } from "@/lib/utils";
 
 export default async function MyProfilePage() {
@@ -201,16 +199,7 @@ export default async function MyProfilePage() {
 
       {/* Actions */}
       <div className="flex items-center gap-3">
-        <Link
-          href="/change-password"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            "rounded-xl gap-2"
-          )}
-        >
-          <Settings className="w-4 h-4" />
-          Change Password
-        </Link>
+        <ChangePasswordButton />
       </div>
     </div>
   );

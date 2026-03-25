@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Lock, KeyRound, Home, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Lock, KeyRound, Home, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { resetPasswordSchema, ResetPasswordInput } from "@/zod/auth.validation";
 import { resetPassword } from "@/services/auth.services";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
 
         {/* Header */}
         <div className="mb-8">
-          <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-4">
             <KeyRound className="w-6 h-6 text-emerald-600" />
           </div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
@@ -98,7 +98,7 @@ export default function ResetPasswordPage() {
               {...register("otp")}
             />
             {errors.otp && (
-              <p className="text-red-500 text-xs">{errors.otp.message}</p>
+              <p className="text-xs text-red-500">{errors.otp.message}</p>
             )}
           </div>
 
@@ -128,7 +128,7 @@ export default function ResetPasswordPage() {
               </button>
             </div>
             {errors.newPassword && (
-              <p className="text-red-500 text-xs">
+              <p className="text-xs text-red-500">
                 {errors.newPassword.message}
               </p>
             )}
@@ -160,7 +160,7 @@ export default function ResetPasswordPage() {
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-red-500 text-xs">
+              <p className="text-xs text-red-500">
                 {errors.confirmPassword.message}
               </p>
             )}
@@ -174,7 +174,7 @@ export default function ResetPasswordPage() {
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 Resetting...
               </div>
             ) : (
@@ -198,5 +198,13 @@ export default function ResetPasswordPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

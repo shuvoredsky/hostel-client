@@ -3,6 +3,8 @@ import DashboardNavbar from "@/components/modules/Dashboard/DashboardNavbar";
 import { getMe } from "@/services/auth.services";
 import { redirect } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {

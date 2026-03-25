@@ -3,9 +3,10 @@ import { formatPrice, getStatusColor } from "@/lib/utils";
 import { Heart, MapPin, Star, BedDouble, Tag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import RemoveWishlistButton from "./RemoveWishlistButton";
+import ViewDetailsButton from "./ViewDetailsButton";
+import BrowseListingsButton from "./BrowseListingsButton";
 
 export default async function WishlistPage() {
   let wishlist: any[] = [];
@@ -127,15 +128,7 @@ export default async function WishlistPage() {
                       <span className="text-xs text-slate-400">/month</span>
                     </div>
 
-                    <Link
-                      href={`/listings/${listing?.id}`}
-                      className={cn(
-                        buttonVariants({ variant: "outline", size: "sm" }),
-                        "text-xs rounded-lg"
-                      )}
-                    >
-                      View Details
-                    </Link>
+                    <ViewDetailsButton listingId={listing?.id} />
                   </div>
                 </div>
               </div>
@@ -154,15 +147,7 @@ export default async function WishlistPage() {
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
             Browse listings and save your favourites by clicking the heart icon
           </p>
-          <Link
-            href="/listings"
-            className={cn(
-              buttonVariants({ variant: "default", size: "sm" }),
-              "bg-emerald-600 hover:bg-emerald-700"
-            )}
-          >
-            Browse Listings
-          </Link>
+          <BrowseListingsButton />
         </div>
       )}
     </div>

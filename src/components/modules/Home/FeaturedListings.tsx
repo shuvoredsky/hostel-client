@@ -29,7 +29,7 @@ function ListingCard({ listing }: { listing: IListing }) {
       <div className="relative h-48 overflow-hidden">
         {listing.images?.[0] ? (
           <Image
-            src={listing.images[0]}
+            src={listing.images[0].url}
             alt={listing.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -74,11 +74,11 @@ function ListingCard({ listing }: { listing: IListing }) {
             <span className="text-xs text-slate-400">/month</span>
           </div>
 
-          {listing.averageRating ? (
+          {listing.avgRating ? (
             <div className="flex items-center gap-1 text-sm">
               <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
               <span className="font-medium text-slate-700 dark:text-slate-300">
-                {listing.averageRating.toFixed(1)}
+                {listing.avgRating.toFixed(1)}
               </span>
               <span className="text-slate-400">
                 ({listing.totalReviews})

@@ -1,5 +1,6 @@
 "use server";
 
+import axios from "axios";
 import { httpClient } from "@/lib/httpClient";
 import {
   IListing,
@@ -9,14 +10,25 @@ import {
 } from "@/types/listing.types";
 import { ApiResponse } from "@/types/api.types";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+if (!API_BASE_URL) {
+  throw new Error("API_BASE_URL is not defined in environment variables");
+}
+
 // ─── Public ───────────────────────────────────────────────────────────────────
 
 export const getAllListings = async (filters?: IListingFilters) => {
   try {
-    const response = await httpClient.get<IListing[]>("/listings", {
-      params: filters as Record<string, unknown>,
-    });
-    return response;
+    const response = await axios.get<{ success: boolean; message: string; data: IListing[]; meta?: { total: number; page: number; limit: number; totalPages: number } }>(
+      `${API_BASE_URL}/listings`,
+      { params: filters }
+    );
+    return {
+      data: response.data.data,
+      meta: response.data.meta || { total: 0, page: 1, limit: 9, totalPages: 0 },
+      success: response.data.success,
+      message: response.data.message,
+    };
   } catch (error) {
     console.error("Error fetching listings:", error);
     throw error;
@@ -25,8 +37,14 @@ export const getAllListings = async (filters?: IListingFilters) => {
 
 export const getSingleListing = async (id: string) => {
   try {
-    const response = await httpClient.get<IListing>(`/listings/${id}`);
-    return response;
+    const response = await axios.get<{ success: boolean; message: string; data: IListing }>(
+      `${API_BASE_URL}/listings/${id}`
+    );
+    return {
+      data: response.data.data,
+      success: response.data.success,
+      message: response.data.message,
+    };
   } catch (error) {
     console.error("Error fetching listing:", error);
     throw error;

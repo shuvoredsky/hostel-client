@@ -1,11 +1,12 @@
 import { getMyListings } from "@/services/listing.services";
 import { formatPrice, formatDate, getStatusColor } from "@/lib/utils";
-import { Building, MapPin, Tag, PlusCircle, Star } from "lucide-react";
+import { Building, MapPin, Tag, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import DeleteListingButton from "./DeleteListingButton";
+import CreateListingButton from "./CreateListingButton";
+import ViewListingButton from "./ViewListingButton";
 
 export default async function MyListingsPage() {
   let listings: any[] = [];
@@ -30,16 +31,7 @@ export default async function MyListingsPage() {
           </p>
         </div>
 
-        <Link
-          href="/owner/create-listing"
-          className={cn(
-            buttonVariants({ size: "sm" }),
-            "bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2"
-          )}
-        >
-          <PlusCircle className="w-4 h-4" />
-          Create Listing
-        </Link>
+        <CreateListingButton />
       </div>
 
       {listings.length > 0 ? (
@@ -131,15 +123,7 @@ export default async function MyListingsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Link
-                        href={`/listings/${listing.id}`}
-                        className={cn(
-                          buttonVariants({ variant: "outline", size: "sm" }),
-                          "text-xs rounded-lg h-8"
-                        )}
-                      >
-                        View
-                      </Link>
+                      <ViewListingButton listingId={listing.id} />
                       <DeleteListingButton listingId={listing.id} />
                     </div>
                   </div>
@@ -159,16 +143,7 @@ export default async function MyListingsPage() {
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
             Create your first listing to start receiving booking requests
           </p>
-          <Link
-            href="/owner/create-listing"
-            className={cn(
-              buttonVariants({ size: "sm" }),
-              "bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-            )}
-          >
-            <PlusCircle className="w-4 h-4" />
-            Create Listing
-          </Link>
+          <CreateListingButton />
         </div>
       )}
     </div>
