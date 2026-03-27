@@ -43,7 +43,7 @@ export const getOwnerPayments = async () => {
 // Utility function for invoice URL construction
 export const getInvoiceUrl = async (paymentId: string): Promise<string> => {
   const baseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
+    process.env.NEXT_PUBLIC_API_BASE_URL || "https://hostel-server-api.onrender.com/api/v1";
   return `${baseUrl}/payments/invoice/${paymentId}`;
 };
 

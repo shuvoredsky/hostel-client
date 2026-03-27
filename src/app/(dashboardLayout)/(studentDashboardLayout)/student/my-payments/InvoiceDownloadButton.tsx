@@ -10,7 +10,7 @@ export default function InvoiceDownloadButton({
   paymentId,
 }: InvoiceDownloadButtonProps) {
   const baseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
+    process.env.NEXT_PUBLIC_API_BASE_URL || "https://hostel-server-api.onrender.com/api/v1";
   const invoiceUrl = `${baseUrl}/payments/invoice/${paymentId}`;
 
   return (

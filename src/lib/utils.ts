@@ -49,6 +49,6 @@ export function getImageUrl(path: string): string {
   if (path.startsWith("http")) return path;
   return `${
     process.env.NEXT_PUBLIC_API_BASE_URL?.replace("/api/v1", "") ||
-    "http://localhost:8000"
+    "https://hostel-server-api.onrender.com"
   }/${path}`;
 }
