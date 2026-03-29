@@ -8,7 +8,7 @@ import {
   useRef,
 } from "react";
 import { IUser } from "@/types/auth.types";
-import { getMe } from "@/services/auth.services";
+import browserClient from "@/lib/browserClient";
 
 interface IAuthContext {
   user: IUser | null;
@@ -32,9 +32,10 @@ export default function AuthProvider({
   const fetchUser = async () => {
     try {
       setIsLoading(true);
-      const response = await getMe();
-      if (response?.data) {
-        setUser(response.data);
+      // ✅ server-side getMe() বাদ — browserClient দিয়ে client-side call
+      const response = await browserClient.get("/auth/me");
+      if (response?.data?.data) {
+        setUser(response.data.data);
       } else {
         setUser(null);
       }
