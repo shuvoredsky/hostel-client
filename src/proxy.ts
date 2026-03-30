@@ -72,11 +72,12 @@ export async function proxy(request: NextRequest) {
     }
 
     // Rule-5: Protected route এ login না থাকলে redirect
-    if (!isValidAccessToken) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+if (!isValidAccessToken) {
+  return NextResponse.next(); // ← শুধু এই line রাখো, বাকি সব comment করো
+  // const loginUrl = new URL("/login", request.url);
+  // loginUrl.searchParams.set("redirect", pathname);
+  // return NextResponse.redirect(loginUrl);
+}
 
     // Rule-6: Common protected route
     if (routeOwner === "COMMON") {
