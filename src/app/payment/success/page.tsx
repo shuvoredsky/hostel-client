@@ -5,7 +5,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle, Home, BookOpen, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { cn, buttonVariants } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export default function PaymentSuccessPage() {
     const searchParams = useSearchParams();
