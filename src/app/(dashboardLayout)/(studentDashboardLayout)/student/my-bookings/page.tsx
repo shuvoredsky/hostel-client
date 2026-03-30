@@ -1,18 +1,52 @@
-import { getMyBookings } from "@/services/booking.services";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/providers/AuthProvider";
+import browserClient from "@/lib/browserClient";
 import { formatDate, formatPrice, getStatusColor } from "@/lib/utils";
 import { BookOpen, Calendar, MapPin, MessageSquare } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import CancelBookingButton from "./CancelBookingButton";
 
-export default async function MyBookingsPage() {
-  let bookings: any[] = [];
+export default function MyBookingsPage() {
+  const { isLoading: authLoading } = useAuth();
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  try {
-    const response = await getMyBookings();
-    bookings = response?.data || [];
-  } catch {
-    bookings = [];
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setIsLoading(true);
+        const response = await browserClient.get("/bookings/my");
+        setBookings(response?.data || []);
+        setError(null);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load bookings");
+        setBookings([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, []);
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">Loading bookings...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">{error}</p>
+      </div>
+    );
   }
 
   return (

@@ -1,30 +1,47 @@
-import { httpClient } from "@/lib/httpClient";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/providers/AuthProvider";
+import browserClient from "@/lib/browserClient";
 import { formatDate, getStatusColor } from "@/lib/utils";
 import { Users, Search } from "lucide-react";
 import AdminUserActions from "./AdminUserActions";
 
-export default async function AdminUsersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ role?: string; status?: string; search?: string; page?: string }>;
-}) {
-  const params = await searchParams;
-  let users: any[] = [];
+export default function AdminUsersPage() {
+  const { isLoading: authLoading } = useAuth();
+  const [users, setUsers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState<string>("");
+  const [status, setStatus] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
+  const [page, setPage] = useState<string>("1");
 
-  try {
-    const response = await httpClient.get<any>("/users", {
-      params: {
-        role: params.role || "",
-        status: params.status || "",
-        search: params.search || "",
-        page: params.page || "1",
-        limit: "20",
-      },
-    });
-    users = response?.data?.users || response?.data || [];
-  } catch {
-    users = [];
-  }
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+        const response = await browserClient.get("/users", {
+          params: {
+            role: role || "",
+            status: status || "",
+            search: search || "",
+            page: page || "1",
+            limit: "20",
+          },
+        });
+        setUsers(response?.data?.users || response?.data || []);
+        setError(null);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load users");
+        setUsers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [role, status, search, page]);
 
   return (
     <div className="space-y-6">
@@ -39,17 +56,17 @@ export default async function AdminUsersPage({
       </div>
 
       {/* Filters */}
-      <form className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3">
         <input
           type="text"
-          name="search"
-          defaultValue={params.search || ""}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name or email..."
           className="flex-1 min-w-[200px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
         <select
-          name="role"
-          defaultValue={params.role || ""}
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
           className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           <option value="">All Roles</option>
@@ -58,25 +75,33 @@ export default async function AdminUsersPage({
           <option value="ADMIN">Admin</option>
         </select>
         <select
-          name="status"
-          defaultValue={params.status || ""}
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
           className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
         >
           <option value="">All Status</option>
           <option value="ACTIVE">Active</option>
           <option value="BLOCKED">Blocked</option>
         </select>
-        <button
-          type="submit"
-          className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-        >
-          <Search className="w-4 h-4" />
-          Filter
-        </button>
-      </form>
+      </div>
 
-      {/* Table */}
-      {users.length > 0 ? (
+      {authLoading || isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <p className="text-slate-500">Loading users...</p>
+        </div>
+      ) : error ? (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-16 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+            <Users className="w-8 h-8 text-red-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            Error loading users
+          </h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
+            {error}
+          </p>
+        </div>
+      ) : users.length > 0 ? (
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

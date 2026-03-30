@@ -1,5 +1,6 @@
-import { getMe } from "@/services/auth.services";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useAuth } from "@/providers/AuthProvider";
 import { formatDate, getStatusColor } from "@/lib/utils";
 import {
   User,
@@ -14,15 +15,23 @@ import {
 import ChangePasswordButton from "./ChangePasswordButton";
 import { cn } from "@/lib/utils";
 
-export default async function MyProfilePage() {
-  let user: any = null;
+export default function MyProfilePage() {
+  const { user, isLoading } = useAuth();
 
-  try {
-    const response = await getMe();
-    user = response?.data;
-    if (!user) redirect("/login");
-  } catch {
-    redirect("/login");
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">Unable to load profile. Please log in again.</p>
+      </div>
+    );
   }
 
   const roleIcon =
@@ -131,7 +140,7 @@ export default async function MyProfilePage() {
               <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                 {user.email}
               </p>
-              {user.emailVerified ? (
+              {user.isEmailVerified ? (
                 <span className="shrink-0 inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
                   <BadgeCheck className="w-3.5 h-3.5" />
                   Verified

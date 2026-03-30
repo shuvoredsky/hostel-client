@@ -1,4 +1,8 @@
-import { getMyPayments } from "@/services/payment.services";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/providers/AuthProvider";
+import browserClient from "@/lib/browserClient";
 import { formatDate, formatPrice, getStatusColor } from "@/lib/utils";
 import {
   CreditCard,
@@ -14,14 +18,44 @@ import Image from "next/image";
 import PaymentInitiateButton from "./PaymentInitiateButton";
 import InvoiceDownloadButton from "./InvoiceDownloadButton";
 
-export default async function MyPaymentsPage() {
-  let payments: any[] = [];
+export default function MyPaymentsPage() {
+  const { isLoading: authLoading } = useAuth();
+  const [payments, setPayments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  try {
-    const response = await getMyPayments();
-    payments = response?.data || [];
-  } catch {
-    payments = [];
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        setIsLoading(true);
+        const response = await browserClient.get("/payments/my");
+        setPayments(response?.data || []);
+        setError(null);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load payments");
+        setPayments([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, []);
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">Loading payments...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">{error}</p>
+      </div>
+    );
   }
 
   const paidPayments = payments.filter((p) => p.status === "PAID");

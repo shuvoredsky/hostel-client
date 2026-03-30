@@ -1,21 +1,55 @@
-import { httpClient } from "@/lib/httpClient";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/providers/AuthProvider";
+import browserClient from "@/lib/browserClient";
 import { formatDate, formatPrice, getStatusColor } from "@/lib/utils";
 import { Building, MapPin, CheckCircle, XCircle } from "lucide-react";
 import Image from "next/image";
 import AdminListingActions from "./AdminListingActions";
 
-export default async function AdminListingsPage() {
-  let listings: any[] = [];
+export default function AdminListingsPage() {
+  const { isLoading: authLoading } = useAuth();
+  const [listings, setListings] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  try {
-    const response = await httpClient.get<any>("/listings/admin/all");
-    listings = response?.data || [];
-  } catch {
-    listings = [];
-  }
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        setIsLoading(true);
+        const response = await browserClient.get("/listings/admin/all");
+        setListings(response?.data || []);
+        setError(null);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load listings");
+        setListings([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchListings();
+  }, []);
 
   const pending = listings.filter((l) => l.status === "PENDING");
   const others = listings.filter((l) => l.status !== "PENDING");
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">Loading listings...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

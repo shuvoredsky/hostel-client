@@ -1,18 +1,52 @@
-import { getBookingRequests } from "@/services/booking.services";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/providers/AuthProvider";
+import browserClient from "@/lib/browserClient";
 import { formatDate, formatPrice, getStatusColor } from "@/lib/utils";
 import { ClipboardList, MapPin, Calendar, MessageSquare, BookOpen } from "lucide-react";
 import Image from "next/image";
 import BookingStatusButtons from "./BookingStatusButtons";
 import AddExtraChargeButton from "./AddExtraChargeButton";
 
-export default async function BookingRequestsPage() {
-  let bookings: any[] = [];
+export default function BookingRequestsPage() {
+  const { isLoading: authLoading } = useAuth();
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  try {
-    const response = await getBookingRequests();
-    bookings = response?.data || [];
-  } catch {
-    bookings = [];
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setIsLoading(true);
+        const response = await browserClient.get("/bookings/owner");
+        setBookings(response?.data || []);
+        setError(null);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load booking requests");
+        setBookings([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, []);
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">Loading booking requests...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">{error}</p>
+      </div>
+    );
   }
 
   const pending = bookings.filter((b) => b.status === "PENDING");

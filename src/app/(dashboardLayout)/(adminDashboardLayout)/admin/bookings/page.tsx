@@ -1,27 +1,42 @@
-import { httpClient } from "@/lib/httpClient";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/providers/AuthProvider";
+import browserClient from "@/lib/browserClient";
 import { formatDate, formatPrice, getStatusColor } from "@/lib/utils";
 import { BookOpen, MapPin, Calendar } from "lucide-react";
 
-export default async function AdminBookingsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ status?: string; page?: string }>;
-}) {
-  const params = await searchParams;
-  let bookings: any[] = [];
+export default function AdminBookingsPage() {
+  const { isLoading: authLoading } = useAuth();
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string>("");
+  const [page, setPage] = useState<string>("1");
 
-  try {
-    const response = await httpClient.get<any>("/bookings/admin/all", {
-      params: {
-        status: params.status || "",
-        page: params.page || "1",
-        limit: "20",
-      },
-    });
-    bookings = response?.data?.bookings || response?.data || [];
-  } catch {
-    bookings = [];
-  }
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setIsLoading(true);
+        const response = await browserClient.get("/bookings/admin/all", {
+          params: {
+            status: status || "",
+            page: page || "1",
+            limit: "20",
+          },
+        });
+        setBookings(response?.data?.bookings || response?.data || []);
+        setError(null);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load bookings");
+        setBookings([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, [status, page]);
 
   const statusOptions = [
     { value: "", label: "All" },
@@ -31,6 +46,14 @@ export default async function AdminBookingsPage({
     { value: "REJECTED", label: "Rejected" },
     { value: "CANCELLED", label: "Cancelled" },
   ];
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">Loading bookings...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -45,15 +68,13 @@ export default async function AdminBookingsPage({
       </div>
 
       {/* Status Filter */}
-      <form className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         {statusOptions.map((opt) => (
           <button
             key={opt.value}
-            type="submit"
-            name="status"
-            value={opt.value}
+            onClick={() => setStatus(opt.value)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors border ${
-              (params.status || "") === opt.value
+              status === opt.value
                 ? "bg-emerald-600 text-white border-emerald-600"
                 : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-500"
             }`}
@@ -61,10 +82,22 @@ export default async function AdminBookingsPage({
             {opt.label}
           </button>
         ))}
-      </form>
+      </div>
 
       {/* Bookings List */}
-      {bookings.length > 0 ? (
+      {error ? (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-16 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+            <BookOpen className="w-8 h-8 text-red-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            Error loading bookings
+          </h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
+            {error}
+          </p>
+        </div>
+      ) : bookings.length > 0 ? (
         <div className="space-y-3">
           {bookings.map((booking: any) => (
             <div

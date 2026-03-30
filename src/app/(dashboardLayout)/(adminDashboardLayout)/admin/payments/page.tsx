@@ -1,45 +1,70 @@
-import { httpClient } from "@/lib/httpClient";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/providers/AuthProvider";
+import browserClient from "@/lib/browserClient";
 import { formatDate, formatPrice, getStatusColor } from "@/lib/utils";
 import { CreditCard, TrendingUp, ShieldCheck, Download } from "lucide-react";
 
-export default async function AdminPaymentsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string }>;
-}) {
-  const params = await searchParams;
-  let payments: any[] = [];
-  let summary = { totalRevenue: 0, totalCommission: 0, totalPaid: 0 };
+export default function AdminPaymentsPage() {
+  const { isLoading: authLoading } = useAuth();
+  const [payments, setPayments] = useState<any[]>([]);
+  const [summary, setSummary] = useState({
+    totalRevenue: 0,
+    totalCommission: 0,
+    totalPaid: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState<string>("1");
 
-  try {
-    const response = await httpClient.get<any>("/payments/admin/all", {
-      params: {
-        page: params.page || "1",
-        limit: "20",
-      },
-    });
-    const data = response?.data;
-    if (Array.isArray(data)) {
-      payments = data;
-    } else {
-      payments = data?.payments || [];
-      summary = {
-        totalRevenue: data?.totalRevenue || 0,
-        totalCommission: data?.totalCommission || 0,
-        totalPaid: data?.totalPaid || 0,
-      };
-    }
-  } catch {
-    payments = [];
-  }
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        setIsLoading(true);
+        const response = await browserClient.get("/payments/admin/all", {
+          params: {
+            page: page || "1",
+            limit: "20",
+          },
+        });
+        const data = response?.data;
+        if (Array.isArray(data)) {
+          setPayments(data);
+        } else {
+          setPayments(data?.payments || []);
+          setSummary({
+            totalRevenue: data?.totalRevenue || 0,
+            totalCommission: data?.totalCommission || 0,
+            totalPaid: data?.totalPaid || 0,
+          });
+        }
+        setError(null);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load payments");
+        setPayments([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, [page]);
 
   // Calculate summary from list if not provided
-  if (!summary.totalRevenue && payments.length > 0) {
-    const paid = payments.filter((p) => p.status === "PAID");
-    summary.totalRevenue = paid.reduce((s: number, p: any) => s + (p.amount || 0), 0);
-    summary.totalCommission = paid.reduce((s: number, p: any) => s + (p.commission || 0), 0);
-    summary.totalPaid = paid.length;
-  }
+  useEffect(() => {
+    if (!summary.totalRevenue && payments.length > 0) {
+      const paid = payments.filter((p) => p.status === "PAID");
+      setSummary({
+        totalRevenue: paid.reduce((s: number, p: any) => s + (p.amount || 0), 0),
+        totalCommission: paid.reduce(
+          (s: number, p: any) => s + (p.commission || 0),
+          0
+        ),
+        totalPaid: paid.length,
+      });
+    }
+  }, [payments]);
 
   return (
     <div className="space-y-6">
@@ -53,47 +78,67 @@ export default async function AdminPaymentsPage({
         </p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          {
-            label: "Total Revenue",
-            value: formatPrice(summary.totalRevenue),
-            icon: TrendingUp,
-            color: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600",
-          },
-          {
-            label: "Total Commission",
-            value: formatPrice(summary.totalCommission),
-            icon: ShieldCheck,
-            color: "bg-purple-50 dark:bg-purple-900/20 text-purple-600",
-          },
-          {
-            label: "Paid Transactions",
-            value: summary.totalPaid,
-            icon: CreditCard,
-            color: "bg-blue-50 dark:bg-blue-900/20 text-blue-600",
-          },
-        ].map((card) => (
-          <div
-            key={card.label}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700"
-          >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${card.color}`}>
-              <card.icon className="w-5 h-5" />
-            </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              {card.value}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              {card.label}
-            </p>
+      {authLoading || isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <p className="text-slate-500">Loading payments...</p>
+        </div>
+      ) : error ? (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-16 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+            <CreditCard className="w-8 h-8 text-red-400" />
           </div>
-        ))}
-      </div>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            Error loading payments
+          </h3>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
+            {error}
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              {
+                label: "Total Revenue",
+                value: formatPrice(summary.totalRevenue),
+                icon: TrendingUp,
+                color: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600",
+              },
+              {
+                label: "Total Commission",
+                value: formatPrice(summary.totalCommission),
+                icon: ShieldCheck,
+                color: "bg-purple-50 dark:bg-purple-900/20 text-purple-600",
+              },
+              {
+                label: "Paid Transactions",
+                value: summary.totalPaid,
+                icon: CreditCard,
+                color: "bg-blue-50 dark:bg-blue-900/20 text-blue-600",
+              },
+            ].map((card) => (
+              <div
+                key={card.label}
+                className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700"
+              >
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${card.color}`}
+                >
+                  <card.icon className="w-5 h-5" />
+                </div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {card.value}
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  {card.label}
+                </p>
+              </div>
+            ))}
+          </div>
 
-      {/* Payments Table */}
-      {payments.length > 0 ? (
+          {/* Payments Table */}
+          {payments.length > 0 ? (
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -179,18 +224,20 @@ export default async function AdminPaymentsPage({
             </table>
           </div>
         </div>
-      ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-16 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4">
-            <CreditCard className="w-8 h-8 text-slate-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-            No payments found
-          </h3>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
-            Payments will appear here once students complete transactions
-          </p>
-        </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-16 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4">
+                <CreditCard className="w-8 h-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                No payments found
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">
+                Payments will appear here once students complete transactions
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

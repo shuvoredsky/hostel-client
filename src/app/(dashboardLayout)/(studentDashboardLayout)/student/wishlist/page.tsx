@@ -1,4 +1,8 @@
-import { getMyWishlist } from "@/services/wishlist.services";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/providers/AuthProvider";
+import browserClient from "@/lib/browserClient";
 import { formatPrice, getStatusColor } from "@/lib/utils";
 import { Heart, MapPin, Star, BedDouble, Tag } from "lucide-react";
 import Image from "next/image";
@@ -8,14 +12,44 @@ import RemoveWishlistButton from "./RemoveWishlistButton";
 import ViewDetailsButton from "./ViewDetailsButton";
 import BrowseListingsButton from "./BrowseListingsButton";
 
-export default async function WishlistPage() {
-  let wishlist: any[] = [];
+export default function WishlistPage() {
+  const { isLoading: authLoading } = useAuth();
+  const [wishlist, setWishlist] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  try {
-    const response = await getMyWishlist();
-    wishlist = response?.data || [];
-  } catch {
-    wishlist = [];
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      try {
+        setIsLoading(true);
+        const response = await browserClient.get("/wishlist/my");
+        setWishlist(response?.data || []);
+        setError(null);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load wishlist");
+        setWishlist([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWishlist();
+  }, []);
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">Loading wishlist...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">{error}</p>
+      </div>
+    );
   }
 
   return (

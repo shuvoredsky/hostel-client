@@ -1,5 +1,8 @@
-import { getAdminDashboard } from "@/services/dashboard.services";
-import { getMe } from "@/services/auth.services";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useAuth } from "@/providers/AuthProvider";
+import browserClient from "@/lib/browserClient";
 import { formatPrice, formatDate, getStatusColor } from "@/lib/utils";
 import {
   Users,
@@ -9,25 +12,51 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default async function AdminDashboardPage() {
-  let dashboard: any = null;
-  let user: any = null;
+interface DashboardData {
+  overview: any;
+  listings: any;
+  bookings: any;
+  payments: any;
+  recentBookings: any;
+  topOwners: any;
+}
 
-  try {
-    const [dashboardRes, userRes] = await Promise.all([
-      getAdminDashboard("all"),
-      getMe(),
-    ]);
-    dashboard = dashboardRes?.data || null;
-    user = userRes?.data || null;
-  } catch {
-    dashboard = null;
-  }
+export default function AdminDashboardPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!dashboard) {
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setIsLoading(true);
+        const res = await browserClient.get("/admin/dashboard?filter=all");
+        setDashboard(res.data?.data || null);
+        setError(null);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load dashboard");
+        setDashboard(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, []);
+
+  if (authLoading || isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-slate-500">Failed to load dashboard</p>
+        <p className="text-slate-500">Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error || !dashboard) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-slate-500">{error || "Failed to load dashboard"}</p>
       </div>
     );
   }
