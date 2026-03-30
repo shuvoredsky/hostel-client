@@ -19,8 +19,8 @@ export default function BookingRequestsPage() {
     const fetchBookings = async () => {
       try {
         setIsLoading(true);
-        const response = await browserClient.get("/bookings/owner");
-        setBookings(response?.data || []);
+        const response = await browserClient.get("/bookings/owner/requests");
+        setBookings(response?.data?.data || []);
         setError(null);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load booking requests");

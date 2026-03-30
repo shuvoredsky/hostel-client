@@ -22,8 +22,8 @@ export default function MyListingsPage() {
     const fetchListings = async () => {
       try {
         setIsLoading(true);
-        const response = await browserClient.get("/listings/my");
-        setListings(response?.data || []);
+        const response = await browserClient.get("/listings/owner/my-listings");
+        setListings(response?.data?.data || []);
         setError(null);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load listings");

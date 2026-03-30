@@ -36,7 +36,7 @@ export default function OwnerDashboardPage() {
     const fetchDashboard = async () => {
       try {
         setIsLoading(true);
-        const res = await browserClient.get("/dashboard/owner");
+        const res = await browserClient.get("/dashboard/owner?range=all");
         setDashboard(res.data?.data || null);
         setError(null);
       } catch (err: any) {

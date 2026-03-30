@@ -22,8 +22,8 @@ export default function WishlistPage() {
     const fetchWishlist = async () => {
       try {
         setIsLoading(true);
-        const response = await browserClient.get("/wishlist/my");
-        setWishlist(response?.data || []);
+        const response = await browserClient.get("/wishlist/my-wishlist");
+        setWishlist(response?.data?.data || []);
         setError(null);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load wishlist");

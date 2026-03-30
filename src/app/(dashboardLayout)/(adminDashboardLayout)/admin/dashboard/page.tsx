@@ -31,7 +31,7 @@ export default function AdminDashboardPage() {
     const fetchDashboard = async () => {
       try {
         setIsLoading(true);
-        const res = await browserClient.get("/admin/dashboard?filter=all");
+        const res = await browserClient.get("/dashboard/admin?range=all");
         setDashboard(res.data?.data || null);
         setError(null);
       } catch (err: any) {

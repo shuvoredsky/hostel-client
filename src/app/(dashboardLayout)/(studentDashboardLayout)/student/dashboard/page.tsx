@@ -25,7 +25,7 @@ export default function StudentDashboardPage() {
     const fetchDashboard = async () => {
       try {
         setIsLoading(true);
-        const res = await browserClient.get("/dashboard/student");
+        const res = await browserClient.get("/dashboard/student?range=all");
         setDashboard(res.data?.data || null);
         setError(null);
       } catch (err: any) {

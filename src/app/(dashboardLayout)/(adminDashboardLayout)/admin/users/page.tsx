@@ -30,7 +30,7 @@ export default function AdminUsersPage() {
             limit: "20",
           },
         });
-        setUsers(response?.data?.users || response?.data || []);
+        setUsers(response?.data?.data || []);
         setError(null);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load users");

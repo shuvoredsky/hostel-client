@@ -28,17 +28,14 @@ export default function AdminPaymentsPage() {
             limit: "20",
           },
         });
-        const data = response?.data;
-        if (Array.isArray(data)) {
-          setPayments(data);
-        } else {
-          setPayments(data?.payments || []);
-          setSummary({
-            totalRevenue: data?.totalRevenue || 0,
-            totalCommission: data?.totalCommission || 0,
-            totalPaid: data?.totalPaid || 0,
-          });
-        }
+        const data = response?.data?.data;
+      setPayments(data?.payments || []);
+setSummary({
+  totalRevenue: data?.payments?.filter((p: any) => p.status === "PAID")
+    .reduce((s: number, p: any) => s + (p.amount || 0), 0) || 0,
+  totalCommission: data?.totalCommission || 0,
+  totalPaid: data?.payments?.filter((p: any) => p.status === "PAID").length || 0,
+});
         setError(null);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load payments");
@@ -51,20 +48,6 @@ export default function AdminPaymentsPage() {
     fetchPayments();
   }, [page]);
 
-  // Calculate summary from list if not provided
-  useEffect(() => {
-    if (!summary.totalRevenue && payments.length > 0) {
-      const paid = payments.filter((p) => p.status === "PAID");
-      setSummary({
-        totalRevenue: paid.reduce((s: number, p: any) => s + (p.amount || 0), 0),
-        totalCommission: paid.reduce(
-          (s: number, p: any) => s + (p.commission || 0),
-          0
-        ),
-        totalPaid: paid.length,
-      });
-    }
-  }, [payments]);
 
   return (
     <div className="space-y-6">

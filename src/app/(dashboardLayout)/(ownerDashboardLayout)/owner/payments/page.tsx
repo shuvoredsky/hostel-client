@@ -26,8 +26,8 @@ export default function OwnerPaymentsPage() {
     const fetchPayments = async () => {
       try {
         setIsLoading(true);
-        const response = await browserClient.get("/payments/owner");
-        setPayments(response?.data || []);
+       const response = await browserClient.get("/payments/owner/all");
+        setPayments(response?.data?.data || []);
         setError(null);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load payments");

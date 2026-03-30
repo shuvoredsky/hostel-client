@@ -19,7 +19,8 @@ export default function AdminListingsPage() {
       try {
         setIsLoading(true);
         const response = await browserClient.get("/listings/admin/all");
-        setListings(response?.data || []);
+        // ✅ ঠিক
+setListings(response?.data?.data || []);
         setError(null);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load listings");

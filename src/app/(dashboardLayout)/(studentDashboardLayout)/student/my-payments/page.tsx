@@ -28,8 +28,8 @@ export default function MyPaymentsPage() {
     const fetchPayments = async () => {
       try {
         setIsLoading(true);
-        const response = await browserClient.get("/payments/my");
-        setPayments(response?.data || []);
+        const response = await browserClient.get("/payments/my-payments");
+       setPayments(response?.data?.data || []);
         setError(null);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load payments");

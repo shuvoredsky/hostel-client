@@ -19,8 +19,8 @@ export default function MyBookingsPage() {
     const fetchBookings = async () => {
       try {
         setIsLoading(true);
-        const response = await browserClient.get("/bookings/my");
-        setBookings(response?.data || []);
+        const response = await browserClient.get("/bookings/my-bookings");
+        setBookings(response?.data?.data || []);
         setError(null);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load bookings");
