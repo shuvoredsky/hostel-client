@@ -1,19 +1,33 @@
-import { getMe } from "@/services/auth.services";
-import { redirect } from "next/navigation";
+"use client";
 
-export default async function CommonProtectedLayout({
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
+
+export default function CommonProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  try {
-    const response = await getMe();
-    if (!response?.data) {
-      redirect("/login");
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!user) {
+      router.replace("/login");
     }
-  } catch {
-    redirect("/login");
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-current"></div>
+      </div>
+    );
   }
+
+  if (!user) return null;
 
   return <>{children}</>;
 }

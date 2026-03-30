@@ -1,21 +1,37 @@
-import { getMe } from "@/services/auth.services";
-import { redirect } from "next/navigation";
+"use client";
 
-export default async function OwnerDashboardLayout({
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
+
+export default function OwnerDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  try {
-    const response = await getMe();
-    const user = response?.data;
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
 
-    if (!user || user.role !== "OWNER") {
-      redirect("/login");
+  useEffect(() => {
+    if (isLoading) return;
+    if (!user) {
+      router.replace("/login?redirect=/owner/dashboard");
+      return;
     }
-  } catch {
-    redirect("/login");
+    if (user.role !== "OWNER") {
+      router.replace("/login");
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-current"></div>
+      </div>
+    );
   }
+
+  if (!user || user.role !== "OWNER") return null;
 
   return <>{children}</>;
 }
