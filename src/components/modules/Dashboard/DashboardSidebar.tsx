@@ -25,6 +25,7 @@ import { IUser } from "@/types/auth.types";
 import { cn } from "@/lib/utils";
 import { logout } from "@/services/auth.client.services";
 import { toast } from "sonner";
+import Image from "next/image";
 
 interface SidebarLink {
   label: string;
@@ -53,6 +54,7 @@ const adminLinks: SidebarLink[] = [
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Bookings", href: "/admin/bookings", icon: BookOpen },
   { label: "Payments", href: "/admin/payments", icon: CreditCard },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 const commonLinks: SidebarLink[] = [
@@ -62,9 +64,10 @@ const commonLinks: SidebarLink[] = [
 
 interface DashboardSidebarProps {
   user: IUser;
+  logo?: string | null;
 }
 
-export default function DashboardSidebar({ user }: DashboardSidebarProps) {
+export default function DashboardSidebar({ user, logo }: DashboardSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -73,15 +76,15 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
     user.role === "STUDENT"
       ? studentLinks
       : user.role === "OWNER"
-      ? ownerLinks
-      : adminLinks;
+        ? ownerLinks
+        : adminLinks;
 
   const roleIcon =
     user.role === "STUDENT"
       ? User
       : user.role === "OWNER"
-      ? Building
-      : ShieldCheck;
+        ? Building
+        : ShieldCheck;
 
   const handleLogout = async () => {
     try {
@@ -103,12 +106,18 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
       <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
         {!collapsed && (
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center shrink-0">
-              <Home className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-base font-bold text-slate-900 dark:text-white">
-              Dhaka<span className="text-emerald-600">Stay</span>
-            </span>
+            {logo ? (
+              <img src={logo} alt="Logo" className="h-7 w-auto object-contain" />
+            ) : (
+              <>
+                <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center shrink-0">
+                  <Home className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-base font-bold text-slate-900 dark:text-white">
+                  Dhaka<span className="text-emerald-600">Stay</span>
+                </span>
+              </>
+            )}
           </Link>
         )}
         {collapsed && (
@@ -139,7 +148,7 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
               {user.image ? (
-                <img
+                <Image
                   src={user.image}
                   alt={user.name}
                   className="w-9 h-9 rounded-full object-cover"

@@ -1,6 +1,4 @@
-"use server";
-
-import { httpClient } from "@/lib/httpClient";
+import browserClient from "@/lib/browserClient";
 import { IListing } from "@/types/listing.types";
 
 export interface IWishlist {
@@ -23,7 +21,7 @@ export interface IWishlistCount {
 
 export const toggleWishlist = async (listingId: string) => {
   try {
-    const response = await httpClient.post<IWishlist>(
+    const response = await browserClient.post<IWishlist>(
       `/wishlist/toggle/${listingId}`,
       {}
     );
@@ -36,7 +34,7 @@ export const toggleWishlist = async (listingId: string) => {
 
 export const getMyWishlist = async () => {
   try {
-    const response = await httpClient.get<IWishlist[]>(
+    const response = await browserClient.get<IWishlist[]>(
       "/wishlist/my-wishlist"
     );
     return response;
@@ -48,7 +46,7 @@ export const getMyWishlist = async () => {
 
 export const checkWishlistStatus = async (listingId: string) => {
   try {
-    const response = await httpClient.get<IWishlistStatus>(
+    const response = await browserClient.get<IWishlistStatus>(
       `/wishlist/status/${listingId}`
     );
     return response;
@@ -62,7 +60,7 @@ export const checkWishlistStatus = async (listingId: string) => {
 
 export const getListingWishlistCount = async (listingId: string) => {
   try {
-    const response = await httpClient.get<IWishlistCount>(
+    const response = await browserClient.get<IWishlistCount>(
       `/wishlist/count/${listingId}`
     );
     return response;

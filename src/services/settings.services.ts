@@ -10,20 +10,24 @@ if (!API_BASE_URL) {
 
 export interface IBanner {
   id: string;
-  title: string;
-  image: string;
+  title?: string;
+  imageUrl: string;  // ← backend এর actual field name
   order: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ISiteSettings {
+export interface ISiteSettingsData {
   id: string;
-  logo?: string;
-  banners: IBanner[];
+  logoUrl?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ISiteSettings {
+  settings: ISiteSettingsData | null;
+  banners: IBanner[];
 }
 
 export interface IUpdateBannerInput {
@@ -37,10 +41,10 @@ export interface IUpdateBannerInput {
 export const getSiteSettings = async () => {
   try {
     const response = await axios.get<{
-      success: boolean;
-      message: string;
-      data: ISiteSettings;
-    }>(`${API_BASE_URL}/settings`);
+  success: boolean;
+  message: string;
+  data: ISiteSettings;
+}>(`${API_BASE_URL}/settings`);
 
     return {
       data: response.data.data,

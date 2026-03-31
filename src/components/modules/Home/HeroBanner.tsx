@@ -75,8 +75,8 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
               className="absolute inset-0"
             >
               <Image
-                src={activeBanners[currentIndex].image}
-                alt={activeBanners[currentIndex].title}
+                src={activeBanners[currentIndex].imageUrl}
+  alt={activeBanners[currentIndex].title || "Banner"}
                 fill
                 className="object-cover"
                 priority

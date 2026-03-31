@@ -1,6 +1,4 @@
-"use server";
-
-import { httpClient } from "@/lib/httpClient";
+import browserClient from "@/lib/browserClient";
 import {
   IBooking,
   ICreateBookingInput,
@@ -12,7 +10,7 @@ import {
 
 export const createBooking = async (payload: ICreateBookingInput) => {
   try {
-    const response = await httpClient.post<IBooking>("/bookings", payload);
+    const response = await browserClient.post<IBooking>("/bookings", payload);
     return response;
   } catch (error) {
     console.error("Error creating booking:", error);
@@ -22,7 +20,7 @@ export const createBooking = async (payload: ICreateBookingInput) => {
 
 export const getMyBookings = async () => {
   try {
-    const response = await httpClient.get<IBooking[]>("/bookings/my-bookings");
+    const response = await browserClient.get<IBooking[]>("/bookings/my-bookings");
     return response;
   } catch (error) {
     console.error("Error fetching my bookings:", error);
@@ -32,7 +30,7 @@ export const getMyBookings = async () => {
 
 export const cancelBooking = async (id: string) => {
   try {
-    const response = await httpClient.patch<IBooking>(
+    const response = await browserClient.patch<IBooking>(
       `/bookings/cancel/${id}`,
       {}
     );
@@ -47,7 +45,7 @@ export const cancelBooking = async (id: string) => {
 
 export const getBookingRequests = async () => {
   try {
-    const response = await httpClient.get<IBooking[]>(
+    const response = await browserClient.get<IBooking[]>(
       "/bookings/owner/requests"
     );
     return response;
@@ -62,7 +60,7 @@ export const updateBookingStatus = async (
   payload: IUpdateBookingStatusInput
 ) => {
   try {
-    const response = await httpClient.patch<IBooking>(
+    const response = await browserClient.patch<IBooking>(
       `/bookings/owner/${id}/status`,
       payload
     );
@@ -78,7 +76,7 @@ export const addExtraCharge = async (
   payload: IAddExtraChargeInput
 ) => {
   try {
-    const response = await httpClient.post<IBooking>(
+    const response = await browserClient.post<IBooking>(
       `/bookings/${id}/extra-charge`,
       payload
     );
@@ -93,7 +91,7 @@ export const addExtraCharge = async (
 
 export const getSingleBooking = async (id: string) => {
   try {
-    const response = await httpClient.get<IBooking>(`/bookings/${id}`);
+    const response = await browserClient.get<IBooking>(`/bookings/${id}`);
     return response;
   } catch (error) {
     console.error("Error fetching booking:", error);
@@ -105,7 +103,7 @@ export const getSingleBooking = async (id: string) => {
 
 export const getAllBookings = async () => {
   try {
-    const response = await httpClient.get<IBooking[]>("/bookings/admin/all");
+    const response = await browserClient.get<IBooking[]>("/bookings/admin/all");
     return response;
   } catch (error) {
     console.error("Error fetching all bookings:", error);

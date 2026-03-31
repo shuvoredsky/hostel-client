@@ -11,7 +11,7 @@ export default async function CommonLayout({
 
   try {
     const response = await getSiteSettings();
-    logo = response?.data?.logo || null;
+    logo = response?.data?.settings?.logoUrl || null;
   } catch {
     logo = null;
   }
