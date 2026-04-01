@@ -143,7 +143,7 @@ const onSubmit = async (data: LoginInput) => {
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-11"
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-11 cursor-pointer"
         >
           {isLoading ? (
             <div className="flex items-center gap-2">
