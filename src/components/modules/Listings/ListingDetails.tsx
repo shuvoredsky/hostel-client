@@ -10,6 +10,7 @@ import {
   Users,
   Heart,
   Share2,
+  MessageCircle ,
   Phone,
   Mail,
   Calendar,
@@ -101,6 +102,28 @@ export default function ListingDetails({ listing }: ListingDetailsProps) {
       setIsBookingLoading(false);
     }
   };
+
+
+const handleMessageOwner = async () => {
+  if (!isAuthenticated) {
+    toast.error("Please login to message the owner");
+    router.push("/login");
+    return;
+  }
+  if (user?.role !== "STUDENT") {
+    toast.error("Only students can message owners");
+    return;
+  }
+  try {
+    const { getOrCreateConversation } = await import("@/services/chat.service");
+    const conversation = await getOrCreateConversation(listing.owner.id);
+    // conversation id সহ chat page এ redirect
+    router.push(`/student/chat?conversationId=${conversation.id}`);
+  } catch {
+    toast.error("Failed to open chat");
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-20">
@@ -342,6 +365,21 @@ export default function ListingDetails({ listing }: ListingDetailsProps) {
                   </Button>
                 </div>
               )}
+
+
+
+              {/* Message Owner Button — Student Only */}
+{isAuthenticated && user?.role === "STUDENT" && (
+  <Button
+    onClick={handleMessageOwner}
+    variant="outline"
+    className="w-full border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 mb-2"
+  >
+    <MessageCircle className="w-4 h-4 mr-2" />
+    Message Owner
+  </Button>
+)}
+
 
               {/* Not logged in */}
               {!isAuthenticated && (

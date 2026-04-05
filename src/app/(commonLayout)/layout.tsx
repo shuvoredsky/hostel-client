@@ -2,6 +2,8 @@ import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";
 import { getSiteSettings } from "@/services/settings.services";
 
+export const revalidate = 0;
+
 export default async function CommonLayout({
   children,
 }: {

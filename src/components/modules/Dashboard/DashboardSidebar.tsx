@@ -20,6 +20,7 @@ import {
   LogOut,
   User,
   ShieldCheck,
+  MessageCircle,
 } from "lucide-react";
 import { IUser } from "@/types/auth.types";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ const studentLinks: SidebarLink[] = [
   { label: "My Bookings", href: "/student/my-bookings", icon: BookOpen },
   { label: "My Payments", href: "/student/my-payments", icon: CreditCard },
   { label: "Wishlist", href: "/student/wishlist", icon: Heart },
+  { label: "Messages", href: "/student/chat", icon: MessageCircle },
 ];
 
 const ownerLinks: SidebarLink[] = [
@@ -46,6 +48,7 @@ const ownerLinks: SidebarLink[] = [
   { label: "Create Listing", href: "/owner/create-listing", icon: PlusCircle },
   { label: "Booking Requests", href: "/owner/booking-requests", icon: ClipboardList },
   { label: "Payments", href: "/owner/payments", icon: CreditCard },
+  { label: "Messages", href: "/owner/chat", icon: MessageCircle },
 ];
 
 const adminLinks: SidebarLink[] = [
