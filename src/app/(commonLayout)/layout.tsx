@@ -1,5 +1,6 @@
 import Navbar from "@/components/shared/Navbar";
 import Footer from "@/components/shared/Footer";
+import Chatbot from "@/components/modules/Chatbot/Chatbot";
 import { getSiteSettings } from "@/services/settings.services";
 
 export const revalidate = 0;
@@ -23,6 +24,7 @@ export default async function CommonLayout({
       <Navbar logo={logo} />
       <main className="flex-1">{children}</main>
       <Footer />
+      <Chatbot />
     </div>
   );
 }
