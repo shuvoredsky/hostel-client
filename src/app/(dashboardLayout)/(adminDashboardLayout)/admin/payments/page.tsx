@@ -31,6 +31,8 @@ export default function AdminPaymentsPage() {
         });
         const data = response?.data?.data;
         setPayments(data?.payments || []);
+        console.log("payments:", data?.payments?.map((p: any) => ({ id: p.id, student: p.student?.name })));
+
         setSummary({
           totalRevenue:
             data?.payments
