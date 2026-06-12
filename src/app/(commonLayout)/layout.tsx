@@ -24,7 +24,7 @@ export default async function CommonLayout({
       <Navbar logo={logo} />
       <main className="flex-1">{children}</main>
       <Footer />
-      <Chatbot />
+      {/* <Chatbot /> */}
     </div>
   );
 }

@@ -4,52 +4,60 @@ export async function POST(req: NextRequest) {
   try {
     const { message } = await req.json();
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`
-,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [
-                {
-                  text: `তুমি DhakaStay-এর AI Assistant। DhakaStay হলো Dhaka শহরের একটি Student Housing Platform যেখানে students verified hostel rooms, seats, এবং apartments খুঁজে পায়। শুধু hostel booking, room info, pricing, location সম্পর্কে সাহায্য করবে। বাংলা ও English দুটোতেই উত্তর দিতে পারবে।\n\nUser এর প্রশ্ন: ${message}`,
-                },
-              ],
-            },
-          ],
-        }),
-      }
-    );
+    if (!message) {
+      return NextResponse.json({ error: "Message is required" }, { status: 400 });
+    }
 
-    const data = await response.json();
+    if (!process.env.OPENROUTER_API_KEY) {
+      console.error("OPENROUTER_API_KEY is not set");
+      return NextResponse.json({ error: "API key not configured" }, { status: 500 });
+    }
 
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+        "X-Title": "DhakaStay",
+      },
+      body: JSON.stringify({
+        model: "nvidia/nemotron-3-ultra-550b-a55b:free",
+        messages: [
+          {
+            role: "system",
+            content: "তুমি DhakaStay-এর AI Assistant। DhakaStay হলো Dhaka শহরের একটি Student Housing Platform। শুধু hostel booking, room info, pricing, location সম্পর্কে সাহায্য করবে। বাংলা ও English দুটোতেই উত্তর দিতে পারবে।"
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ],
+      }),
+    });
+
+    // ← এই অংশটা আগে ছিল না
     if (!response.ok) {
-      console.error("Gemini API error:", data);
+      const errorData = await response.json();
+      console.error("OpenRouter API error:", JSON.stringify(errorData));
       return NextResponse.json(
-        { error: "Gemini API failed", details: data },
-        { status: 500 }
+        { error: "AI service error", details: errorData },
+        { status: response.status }
       );
     }
 
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content;
 
     if (!reply) {
-      return NextResponse.json(
-        { error: "No reply from Gemini" },
-        { status: 500 }
-      );
+      console.error("Unexpected response structure:", JSON.stringify(data));
+      return NextResponse.json({ error: "No reply from AI" }, { status: 500 });
     }
 
     return NextResponse.json({ reply });
+
   } catch (error) {
     console.error("Chat API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
