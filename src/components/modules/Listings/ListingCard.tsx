@@ -84,6 +84,16 @@ export default function ListingCard({ listing }: ListingCardProps) {
           </div>
         )}
 
+
+        {/* নতুন — Not Available Overlay */}
+  {!listing.isAvailable && (
+    <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+      <span className="text-white font-semibold px-4 py-1.5 rounded-full bg-black/40 border border-white/30">
+        Not Available
+      </span>
+    </div>
+  )}
+
         {/* Type Badge */}
         <div className="absolute top-3 left-3">
           <span
