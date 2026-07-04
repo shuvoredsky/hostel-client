@@ -39,7 +39,15 @@ const studentLinks: SidebarLink[] = [
   { label: "My Bookings", href: "/student/my-bookings", icon: BookOpen },
   { label: "My Payments", href: "/student/my-payments", icon: CreditCard },
   { label: "Wishlist", href: "/student/wishlist", icon: Heart },
+  { label: "Verification", href: "/student/verification", icon: ShieldCheck },
   { label: "Messages", href: "/student/chat", icon: MessageCircle },
+];
+
+const tenantLinks: SidebarLink[] = [
+  { label: "Dashboard", href: "/tenant/dashboard", icon: LayoutDashboard },
+  { label: "My Bookings", href: "/tenant/my-bookings", icon: BookOpen },
+  { label: "My Payments", href: "/tenant/my-payments", icon: CreditCard },
+  { label: "Messages", href: "/tenant/chat", icon: MessageCircle },
 ];
 
 const ownerLinks: SidebarLink[] = [
@@ -57,6 +65,7 @@ const adminLinks: SidebarLink[] = [
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Bookings", href: "/admin/bookings", icon: BookOpen },
   { label: "Payments", href: "/admin/payments", icon: CreditCard },
+  { label: "Verification", href: "/admin/verification", icon: ShieldCheck },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -78,16 +87,20 @@ export default function DashboardSidebar({ user, logo }: DashboardSidebarProps) 
   const roleLinks =
     user.role === "STUDENT"
       ? studentLinks
-      : user.role === "OWNER"
-        ? ownerLinks
-        : adminLinks;
+      : user.role === "TENANT"
+        ? tenantLinks
+        : user.role === "OWNER"
+          ? ownerLinks
+          : adminLinks;
 
   const roleIcon =
     user.role === "STUDENT"
       ? User
-      : user.role === "OWNER"
-        ? Building
-        : ShieldCheck;
+      : user.role === "TENANT"
+        ? User
+        : user.role === "OWNER"
+          ? Building
+          : ShieldCheck;
 
   const handleLogout = async () => {
     try {
@@ -180,7 +193,13 @@ export default function DashboardSidebar({ user, logo }: DashboardSidebarProps) 
         {/* Role Links */}
         {!collapsed && (
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wider px-2 mb-2">
-            {user.role === "ADMIN" ? "Admin" : user.role === "OWNER" ? "Owner" : "Student"}
+            {user.role === "ADMIN"
+              ? "Admin"
+              : user.role === "OWNER"
+              ? "Owner"
+              : user.role === "TENANT"
+              ? "Tenant"
+              : "Student"}
           </p>
         )}
         {roleLinks.map((link) => (

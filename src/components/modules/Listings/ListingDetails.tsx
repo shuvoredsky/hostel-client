@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -11,22 +11,21 @@ import {
   Heart,
   Share2,
   MessageCircle ,
-  Phone,
   Mail,
   Calendar,
   CheckCircle,
   ArrowLeft,
 } from "lucide-react";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { IListing } from "@/types/listing.types";
 import { formatPrice, formatDate } from "@/lib/utils";
+import { getMyBookingsRoute } from "@/lib/authUtils";
 import { useAuth } from "@/providers/AuthProvider";
 import { toggleWishlist } from "@/services/wishlist.services";
 import { createBooking } from "@/services/booking.services";
 import ReviewSection from "./ReviewSection";
+import ListingOfferBadges from "./ListingOfferBadges";
 
 interface ListingDetailsProps {
   listing: IListing;
@@ -42,6 +41,7 @@ export default function ListingDetails({ listing }: ListingDetailsProps) {
   const { user, isAuthenticated } = useAuth();
   const router = useRouter();
   const [currentImage, setCurrentImage] = useState(0);
+  const canBookOrInteract = user?.role === "STUDENT" || user?.role === "TENANT";
   const [isWishlisted, setIsWishlisted] = useState(
     listing.isWishlisted || false
   );
@@ -49,12 +49,18 @@ export default function ListingDetails({ listing }: ListingDetailsProps) {
   const [isBookingLoading, setIsBookingLoading] = useState(false);
   const [moveInDate, setMoveInDate] = useState("");
   const [message, setMessage] = useState("");
+  const [paymentPlan, setPaymentPlan] = useState<"FULL" | "HALF_MONTHLY">("FULL");
 
   const images = listing.images || [];
 
   const handleWishlist = async () => {
-    if (!isAuthenticated || user?.role !== "STUDENT") {
-      toast.error("Please login as a student to save listings");
+    if (!isAuthenticated) {
+      toast.error("Please login as a student or tenant to save listings");
+      router.push("/login");
+      return;
+    }
+    if (!canBookOrInteract) {
+      toast.error("Only students and tenants can save listings");
       return;
     }
     try {
@@ -71,18 +77,60 @@ export default function ListingDetails({ listing }: ListingDetailsProps) {
     }
   };
 
+  const genderAllowed = useMemo(() => {
+    if (listing.genderPreference === "ANYONE") return true;
+    if (!user?.gender) return false;
+    if (listing.genderPreference === "BOYS") return user.gender === "MALE";
+    if (listing.genderPreference === "GIRLS") return user.gender === "FEMALE";
+    return false;
+  }, [listing.genderPreference, user?.gender]);
+
+  const genderRestrictionMessage = useMemo(() => {
+    if (listing.genderPreference === "ANYONE") return null;
+    if (!user?.gender) {
+      return `This listing is restricted to ${
+        listing.genderPreference === "BOYS" ? "male" : "female"
+      } students. Please complete your profile gender to continue.`;
+    }
+    if (!genderAllowed) {
+      return `This listing is reserved for ${
+        listing.genderPreference === "BOYS" ? "male" : "female"
+      } students.`;
+    }
+    return null;
+  }, [genderAllowed, listing.genderPreference, user?.gender]);
+
+  const halfMonthlyPreview = useMemo(() => {
+    if (paymentPlan !== "HALF_MONTHLY" || !listing.allowHalfMonthlyPay) {
+      return null;
+    }
+
+    const first = parseFloat((listing.price / 2).toFixed(2));
+    const second = parseFloat((listing.price - first).toFixed(2));
+    return {
+      first,
+      second,
+    };
+  }, [listing.allowHalfMonthlyPay, listing.price, paymentPlan]);
+
   const handleBooking = async () => {
     if (!isAuthenticated) {
       toast.error("Please login to book this listing");
       router.push("/login");
       return;
     }
-    if (user?.role !== "STUDENT") {
-      toast.error("Only students can book listings");
+    if (!canBookOrInteract) {
+      toast.error("Only students and tenants can book listings");
       return;
     }
     if (!moveInDate) {
       toast.error("Please select a move-in date");
+      return;
+    }
+    if (!genderAllowed) {
+      toast.error(
+        "You cannot book this listing because it does not match your gender preference."
+      );
       return;
     }
     try {
@@ -91,9 +139,13 @@ export default function ListingDetails({ listing }: ListingDetailsProps) {
         listingId: listing.id,
         moveInDate,
         message,
+        paymentPlan,
       });
       toast.success("Booking request sent successfully!");
-      router.push("/student/my-bookings");
+      const myBookingsRoute = user?.role
+        ? getMyBookingsRoute(user.role)
+        : "/student/my-bookings";
+      router.push(myBookingsRoute);
     } catch (error: any) {
       const msg =
         error?.response?.data?.message || "Failed to send booking request";
@@ -110,15 +162,15 @@ const handleMessageOwner = async () => {
     router.push("/login");
     return;
   }
-  if (user?.role !== "STUDENT") {
-    toast.error("Only students can message owners");
+  if (!canBookOrInteract) {
+    toast.error("Only students and tenants can message owners");
     return;
   }
   try {
     const { getOrCreateConversation } = await import("@/services/chat.service");
     const conversation = await getOrCreateConversation(listing.owner.id);
-    // conversation id সহ chat page এ redirect
-    router.push(`/student/chat?conversationId=${conversation.id}`);
+    const chatBase = user?.role === "TENANT" ? "/tenant" : "/student";
+    router.push(`${chatBase}/chat?conversationId=${conversation.id}`);
   } catch {
     toast.error("Failed to open chat");
   }
@@ -167,6 +219,15 @@ const handleMessageOwner = async () => {
                   >
                     {listing.type}
                   </span>
+                </div>
+
+                <div className="absolute top-4 right-4 hidden md:flex flex-col items-end gap-2">
+                  <ListingOfferBadges
+                    studentDiscountPercent={listing.studentDiscountPercent}
+                    genderPreference={listing.genderPreference}
+                    allowHalfMonthlyPay={listing.allowHalfMonthlyPay}
+                    variant="compact"
+                  />
                 </div>
               </div>
 
@@ -302,6 +363,64 @@ const handleMessageOwner = async () => {
               </div>
             </div>
 
+            {/* Offer Summary */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-4">
+                Student Offers & Payment
+              </h3>
+              <div className="space-y-3">
+                {listing.studentDiscountPercent > 0 && (
+                  <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 p-4">
+                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-200">
+                      {listing.studentDiscountPercent}% off for verified students
+                    </p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Discount automatically applies when a verified student books this listing.
+                    </p>
+                  </div>
+                )}
+
+                {listing.genderPreference !== "ANYONE" && (
+                  <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {listing.genderPreference === "BOYS" ? "Boys Only" : "Girls Only"}
+                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      This listing is reserved for {listing.genderPreference === "BOYS" ? "male" : "female"} students.
+                    </p>
+                  </div>
+                )}
+
+                <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {listing.advanceOption === "NO_ADVANCE"
+                      ? "No advance required"
+                      : listing.advanceOption === "ONE_MONTH"
+                      ? "Advance required: 1 Month"
+                      : "Advance required: 2 Months"}
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {listing.advanceOption === "NO_ADVANCE"
+                      ? "Pay rent without any advance payment."
+                      : listing.advanceOption === "ONE_MONTH"
+                      ? "A one month advance payment is required before move-in."
+                      : "A two month advance payment is required before move-in."}
+                  </p>
+                </div>
+
+                {listing.allowHalfMonthlyPay && (
+                  <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4">
+                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-200">
+                      Half-Monthly payment available
+                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Students can split rent into two installments for easier payment.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Reviews */}
             <ReviewSection listingId={listing.id} />
           </div>
@@ -317,8 +436,8 @@ const handleMessageOwner = async () => {
                 <span className="text-slate-400">/month</span>
               </div>
 
-              {/* Booking Form — Student Only */}
-              {isAuthenticated && user?.role === "STUDENT" && (
+              {/* Booking Form — Student/Tenant */}
+              {isAuthenticated && canBookOrInteract && (
                 <div className="space-y-3 mb-4">
                   <div>
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">
@@ -335,6 +454,71 @@ const handleMessageOwner = async () => {
                       />
                     </div>
                   </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">
+                      Payment Plan
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentPlan("FULL")}
+                        className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all ${
+                          paymentPlan === "FULL"
+                            ? "border-emerald-600 bg-emerald-600 text-white"
+                            : "border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white hover:border-emerald-400"
+                        }`}
+                      >
+                        Full payment
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => listing.allowHalfMonthlyPay && setPaymentPlan("HALF_MONTHLY")}
+                        disabled={!listing.allowHalfMonthlyPay}
+                        className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all ${
+                          paymentPlan === "HALF_MONTHLY"
+                            ? "border-emerald-600 bg-emerald-600 text-white"
+                            : "border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white hover:border-emerald-400"
+                        } ${!listing.allowHalfMonthlyPay ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        Half-monthly
+                      </button>
+                    </div>
+                    {listing.allowHalfMonthlyPay ? (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                        Split rent into two installments for easier payment.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                        Half-monthly payment is not available for this listing.
+                      </p>
+                    )}
+                  </div>
+
+                  {halfMonthlyPreview && (
+                    <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 text-sm text-slate-600 dark:text-slate-300">
+                      <p className="font-medium text-slate-900 dark:text-white mb-1">
+                        Half-monthly payment preview
+                      </p>
+                      <p>
+                        First installment: {formatPrice(halfMonthlyPreview.first)} now
+                      </p>
+                      <p>
+                        Second installment: {formatPrice(halfMonthlyPreview.second)} in 15 days
+                      </p>
+                      {listing.studentDiscountPercent > 0 && (
+                        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                          Student discount will apply when booking is accepted.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {genderRestrictionMessage && (
+                    <div className="rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 p-3 text-sm text-red-700 dark:text-red-200">
+                      {genderRestrictionMessage}
+                    </div>
+                  )}
 
                   <div>
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 block">
@@ -368,8 +552,8 @@ const handleMessageOwner = async () => {
 
 
 
-              {/* Message Owner Button — Student Only */}
-{isAuthenticated && user?.role === "STUDENT" && (
+              {/* Message Owner Button — Student/Tenant */}
+{isAuthenticated && canBookOrInteract && (
   <Button
     onClick={handleMessageOwner}
     variant="outline"

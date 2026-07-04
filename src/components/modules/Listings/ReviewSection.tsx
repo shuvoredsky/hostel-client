@@ -21,6 +21,7 @@ interface ReviewSectionProps {
 
 export default function ReviewSection({ listingId }: ReviewSectionProps) {
   const { user, isAuthenticated } = useAuth();
+  const canReview = user?.role === "STUDENT" || user?.role === "TENANT";
   const [reviews, setReviews] = useState<IReview[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [rating, setRating] = useState(0);
@@ -132,8 +133,8 @@ export default function ReviewSection({ listingId }: ReviewSectionProps) {
         )}
       </div>
 
-      {/* Write Review — Student Only */}
-      {isAuthenticated && user?.role === "STUDENT" && (
+      {/* Write Review — Student/Tenant */}
+      {isAuthenticated && canReview && (
         <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 mb-6">
           <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
             Write a Review

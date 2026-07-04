@@ -2,6 +2,9 @@ import { IUser } from "./auth.types";
 
 export type ListingType = "ROOM" | "SEAT" | "BASHA";
 export type ListingStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type StudentDiscountPercent = 0 | 5 | 10 | 15;
+export type AdvanceOption = "NO_ADVANCE" | "ONE_MONTH" | "TWO_MONTH";
+export type GenderPreference = "BOYS" | "GIRLS" | "ANYONE";
 
 export interface IListingImage {
   id: string;
@@ -20,6 +23,10 @@ export interface IListing {
   city: string;
   totalRooms: number;
   totalSeats: number;
+  studentDiscountPercent: StudentDiscountPercent;
+  advanceOption: AdvanceOption;
+  genderPreference: GenderPreference;
+  allowHalfMonthlyPay: boolean;
   images: IListingImage[];
   status: ListingStatus;
   isAvailable: boolean;
@@ -57,6 +64,10 @@ export interface ICreateListingInput {
   city: string;
   totalRooms: number;
   totalSeats: number;
+  studentDiscountPercent: StudentDiscountPercent;
+  advanceOption: AdvanceOption;
+  genderPreference: GenderPreference;
+  allowHalfMonthlyPay: boolean;
   images: File[];
 }
 

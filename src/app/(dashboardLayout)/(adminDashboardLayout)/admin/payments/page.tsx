@@ -29,20 +29,16 @@ export default function AdminPaymentsPage() {
             limit: "20",
           },
         });
-        const data = response?.data?.data;
-        setPayments(data?.payments || []);
-        console.log("payments:", data?.payments?.map((p: any) => ({ id: p.id, student: p.student?.name })));
 
-        setSummary({
-          totalRevenue:
-            data?.payments
-              ?.filter((p: any) => p.status === "PAID")
-              .reduce((s: number, p: any) => s + (p.amount || 0), 0) || 0,
-          totalCommission: data?.totalCommission || 0,
-          totalPaid:
-            data?.payments?.filter((p: any) => p.status === "PAID").length ||
-            0,
-        });
+       const data = response?.data?.data;
+setPayments(data?.payments || []);
+
+setSummary({
+  totalRevenue: data?.totalRevenue || 0,
+  totalCommission: data?.totalCommission || 0,
+  totalPaid: data?.totalPaidCount || 0,
+});
+
         setError(null);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load payments");
@@ -179,18 +175,29 @@ export default function AdminPaymentsPage() {
                           </p>
                         </td>
                         <td className="px-5 py-4 font-medium text-emerald-600">
-                          {formatPrice(payment.amount || 0)}
-                        </td>
+  {formatPrice(payment.amount || 0)}
+  {payment.booking?.paymentPlan === "HALF_MONTHLY" && (
+    <span className="block text-xs text-slate-400 font-normal">
+      Half-Monthly Plan
+    </span>
+  )}
+</td>
                         <td className="px-5 py-4 font-medium text-purple-600">
                           {formatPrice(payment.commission || 0)}
                         </td>
-                        <td className="px-5 py-4">
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}
-                          >
-                            {payment.status}
-                          </span>
-                        </td>
+                       <td className="px-5 py-4">
+  {payment.booking?.paymentPlan === "HALF_MONTHLY" && payment.status !== "PAID" ? (
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600">
+      Partially Paid (Installment)
+    </span>
+  ) : (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(payment.status)}`}
+    >
+      {payment.status}
+    </span>
+  )}
+</td>
                         <td className="px-5 py-4 text-slate-500 dark:text-slate-400 text-xs">
                           {payment.paidAt ? formatDate(payment.paidAt) : "—"}
                         </td>

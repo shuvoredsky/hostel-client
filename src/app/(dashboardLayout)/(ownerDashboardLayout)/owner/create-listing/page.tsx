@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -11,14 +11,14 @@ import {
   MapPin,
   DollarSign,
   FileText,
-  Image as ImageIcon,
   X,
   Loader2,
   Upload,
   BedDouble,
   Users,
 } from "lucide-react";
-import browserClient from "@/lib/browserClient";
+import { createListing } from "@/services/listing.services";
+import { Switch } from "@/components/ui/switch";
 
 const createListingSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -41,11 +41,21 @@ const createListingSchema = z.object({
     .string()
     .min(1, "Required")
     .refine((v) => !isNaN(Number(v)) && Number(v) >= 0, "Enter a valid number"),
+  studentDiscountPercent: z.enum(["0", "5", "10", "15"]),
+  advanceOption: z.enum(["NO_ADVANCE", "ONE_MONTH", "TWO_MONTH"], {
+    error: "Please select an advance option",
+  }),
+  genderPreference: z.enum(["BOYS", "GIRLS", "ANYONE"], {
+    error: "Please select a gender preference",
+  }),
+  allowHalfMonthlyPay: z.boolean(),
 });
 
 type CreateListingFormData = z.infer<typeof createListingSchema>;
 
-const LISTING_TYPES = [
+type ListingType = "ROOM" | "SEAT" | "BASHA";
+
+const LISTING_TYPES: Array<{ value: ListingType; label: string; desc: string }> = [
   { value: "ROOM", label: "Room", desc: "Private or shared room" },
   { value: "SEAT", label: "Seat", desc: "Seat in shared space" },
   { value: "BASHA", label: "Basha", desc: "Full apartment/flat" },
@@ -58,6 +68,25 @@ const DHAKA_AREAS = [
   "Kadamtali", "Sabujbagh", "Paltan", "Ramna", "Shahbagh", "Sutrapur",
 ];
 
+const STUDENT_DISCOUNT_OPTIONS = [
+  { value: "0", label: "0%" },
+  { value: "5", label: "5%" },
+  { value: "10", label: "10%" },
+  { value: "15", label: "15%" },
+] as const;
+
+const ADVANCE_OPTIONS = [
+  { value: "NO_ADVANCE", label: "No Advance", desc: "No advance payment" },
+  { value: "ONE_MONTH", label: "1 Month Advance", desc: "One month advance required" },
+  { value: "TWO_MONTH", label: "2 Month Advance", desc: "Two months advance required" },
+] as const;
+
+const GENDER_PREFERENCE_OPTIONS = [
+  { value: "BOYS", label: "Boys Only" },
+  { value: "GIRLS", label: "Girls Only" },
+  { value: "ANYONE", label: "Anyone" },
+] as const;
+
 export default function CreateListingPage() {
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -67,15 +96,27 @@ export default function CreateListingPage() {
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CreateListingFormData>({
     resolver: zodResolver(createListingSchema),
-    defaultValues: { totalRooms: "0", totalSeats: "0" },
+    defaultValues: {
+      totalRooms: "0",
+      totalSeats: "0",
+      type: "ROOM",
+      studentDiscountPercent: "0",
+      advanceOption: "NO_ADVANCE",
+      genderPreference: "ANYONE",
+      allowHalfMonthlyPay: false,
+    },
   });
 
-  const selectedType = watch("type");
+  const selectedType = useWatch({ control, name: "type" }) as ListingType;
+  const selectedDiscount = useWatch({ control, name: "studentDiscountPercent" }) as CreateListingFormData["studentDiscountPercent"];
+  const selectedAdvance = useWatch({ control, name: "advanceOption" }) as CreateListingFormData["advanceOption"];
+  const selectedGenderPreference = useWatch({ control, name: "genderPreference" }) as CreateListingFormData["genderPreference"];
+  const allowHalfMonthlyPay = useWatch({ control, name: "allowHalfMonthlyPay" }) as boolean;
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -113,18 +154,20 @@ export default function CreateListingPage() {
     formData.append("city", data.city);
     formData.append("totalRooms", data.totalRooms);
     formData.append("totalSeats", data.totalSeats);
+    formData.append("studentDiscountPercent", data.studentDiscountPercent);
+    formData.append("advanceOption", data.advanceOption);
+    formData.append("genderPreference", data.genderPreference);
+    formData.append("allowHalfMonthlyPay", String(data.allowHalfMonthlyPay));
     images.forEach((img) => formData.append("images", img));
 
     try {
-      await browserClient.post("/listings", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      await createListing(formData);
       toast.success("Listing created! Awaiting approval.");
       router.push("/owner/my-listings");
       router.refresh();
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "Failed to create listing";
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      const message = err.response?.data?.message || "Failed to create listing";
       toast.error(message);
     }
   };
@@ -152,7 +195,7 @@ export default function CreateListingPage() {
               <button
                 key={t.value}
                 type="button"
-                onClick={() => setValue("type", t.value as any)}
+                onClick={() => setValue("type", t.value)}
                 className={`p-3 rounded-xl border-2 text-left transition-all ${
                   selectedType === t.value
                     ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
@@ -341,6 +384,104 @@ export default function CreateListingPage() {
               {errors.city && (
                 <p className="text-xs text-red-500">{errors.city.message}</p>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Student Exclusive Offers */}
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
+                Student Exclusive Offers
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Add discount and payment preferences for student bookings.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Student Discount %
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {STUDENT_DISCOUNT_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setValue("studentDiscountPercent", option.value)}
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all ${
+                      selectedDiscount === option.value
+                        ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Advance Option
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {ADVANCE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setValue("advanceOption", option.value)}
+                    className={`rounded-2xl border px-4 py-3 text-left text-sm transition-all ${
+                      selectedAdvance === option.value
+                        ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                    }`}
+                  >
+                    <p className="font-semibold">{option.label}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{option.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Gender Preference
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {GENDER_PREFERENCE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setValue("genderPreference", option.value)}
+                    className={`rounded-full border px-4 py-2 text-sm font-medium transition-all ${
+                      selectedGenderPreference === option.value
+                        ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-900">
+              <div>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                  Allow Half-Monthly Pay
+                </p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Let students split rent into two installments.
+                </p>
+              </div>
+              <Switch
+                checked={allowHalfMonthlyPay}
+                onCheckedChange={(value) => setValue("allowHalfMonthlyPay", value)}
+              />
             </div>
           </div>
         </div>

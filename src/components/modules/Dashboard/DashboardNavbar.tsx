@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   Moon,
   Sun,
-  Bell,
   Menu,
   X,
   Home,
@@ -14,6 +13,7 @@ import {
   BookOpen,
   CreditCard,
   Heart,
+  MessageCircle,
   Building,
   PlusCircle,
   ClipboardList,
@@ -30,7 +30,6 @@ import { IUser } from "@/types/auth.types";
 import { logout } from "@/services/auth.client.services";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { getDefaultDashboardRoute } from "@/lib/authUtils";
 
 interface DashboardNavbarProps {
   user: IUser;
@@ -41,6 +40,14 @@ const studentLinks = [
   { label: "My Bookings", href: "/student/my-bookings", icon: BookOpen },
   { label: "My Payments", href: "/student/my-payments", icon: CreditCard },
   { label: "Wishlist", href: "/student/wishlist", icon: Heart },
+  { label: "Verification", href: "/student/verification", icon: ShieldCheck },
+];
+
+const tenantLinks = [
+  { label: "Dashboard", href: "/tenant/dashboard", icon: LayoutDashboard },
+  { label: "My Bookings", href: "/tenant/my-bookings", icon: BookOpen },
+  { label: "My Payments", href: "/tenant/my-payments", icon: CreditCard },
+  { label: "Messages", href: "/tenant/chat", icon: MessageCircle },
 ];
 
 const ownerLinks = [
@@ -57,10 +64,11 @@ const adminLinks = [
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Bookings", href: "/admin/bookings", icon: BookOpen },
   { label: "Payments", href: "/admin/payments", icon: CreditCard },
+  { label: "Verification", href: "/admin/verification", icon: ShieldCheck },
 ];
 
 const getPageTitle = (pathname: string): string => {
-  const allLinks = [...studentLinks, ...ownerLinks, ...adminLinks];
+  const allLinks = [...studentLinks, ...tenantLinks, ...ownerLinks, ...adminLinks];
   const match = allLinks.find((l) => pathname.startsWith(l.href));
   if (match) return match.label;
   if (pathname.includes("my-profile")) return "My Profile";
@@ -77,6 +85,8 @@ export default function DashboardNavbar({ user }: DashboardNavbarProps) {
   const roleLinks =
     user.role === "STUDENT"
       ? studentLinks
+      : user.role === "TENANT"
+      ? tenantLinks
       : user.role === "OWNER"
       ? ownerLinks
       : adminLinks;

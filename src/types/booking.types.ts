@@ -23,6 +23,7 @@ export interface IBooking {
   student: IUser;
   message?: string;
   moveInDate: string;
+  paymentPlan?: "FULL" | "HALF_MONTHLY";
   status: BookingStatus;
   extraCharges: IExtraCharge[];
   totalAmount: number;
@@ -34,6 +35,7 @@ export interface ICreateBookingInput {
   listingId: string;
   message?: string;
   moveInDate: string;
+  paymentPlan?: "FULL" | "HALF_MONTHLY";
 }
 
 export interface IUpdateBookingStatusInput {

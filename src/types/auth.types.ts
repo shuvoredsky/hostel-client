@@ -1,5 +1,24 @@
-export type UserRole = "STUDENT" | "OWNER" | "ADMIN";
+export type UserRole = "STUDENT" | "OWNER" | "ADMIN" | "TENANT";
 export type UserStatus = "ACTIVE" | "BLOCKED";
+
+export type Gender = "MALE" | "FEMALE" | "OTHER";
+
+export type TenantType =
+  | "JOB_HOLDER"
+  | "FREELANCER"
+  | "INTERN"
+  | "BUSINESS_PERSON"
+  | "FAMILY"
+  | "OTHERS";
+
+export type Profession =
+  | "SOFTWARE_ENGINEER"
+  | "DOCTOR"
+  | "TEACHER"
+  | "BANKER"
+  | "FREELANCER"
+  | "BUSINESS"
+  | "OTHERS";
 
 export interface IUser {
   id: string;
@@ -7,8 +26,10 @@ export interface IUser {
   email: string;
   role: UserRole;
   status: UserStatus;
-  image?: string; 
+  image?: string;
   phone?: string;
+  gender?: Gender;
+  profession?: Profession;
   isEmailVerified: boolean;
   createdAt: string;
   updatedAt: string;
@@ -19,10 +40,23 @@ export interface ILoginInput {
   password: string;
 }
 
+// Base payload — Owner registration যেহেতু extra field নেয় না
 export interface IRegisterInput {
   name: string;
   email: string;
   password: string;
+}
+
+export interface IRegisterStudentInput extends IRegisterInput {
+  gender: Gender;
+}
+
+export interface IRegisterOwnerInput extends IRegisterInput {}
+
+export interface IRegisterTenantInput extends IRegisterInput {
+  gender: Gender;
+  tenantType: TenantType;
+  profession?: Profession;
 }
 
 export interface IChangePasswordInput {

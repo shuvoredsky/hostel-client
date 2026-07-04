@@ -84,13 +84,13 @@ export default function OwnerDashboardPage() {
       icon: BookOpen,
       color: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600",
     },
-    {
-      label: "Total Revenue",
-      value: formatPrice(overview.totalRevenue || 0),
-      sub: `${overview.totalUnpaidCount} unpaid`,
-      icon: TrendingUp,
-      color: "bg-purple-50 dark:bg-purple-900/20 text-purple-600",
-    },
+  {
+  label: "Total Revenue (Net)",
+  value: formatPrice(overview.totalRevenue || 0),
+  sub: `Gross: ${formatPrice(overview.grossRevenue || 0)} · Commission: ${formatPrice(overview.totalCommissionDeducted || 0)}`,
+  icon: TrendingUp,
+  color: "bg-purple-50 dark:bg-purple-900/20 text-purple-600",
+},
     {
       label: "Pending Requests",
       value: bookings?.pending || 0,
@@ -230,6 +230,25 @@ export default function OwnerDashboardPage() {
                 {formatPrice(payments?.totalRevenue || 0)}
               </span>
             </div>
+
+
+            <div className="flex items-center justify-between px-3 text-xs text-slate-400">
+  <span>Gross Collected: {formatPrice(payments?.grossRevenue || 0)}</span>
+  <span>Commission: -{formatPrice(payments?.totalCommissionDeducted || 0)}</span>
+</div>
+
+<div className="flex items-center justify-between p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20">
+  <div className="flex items-center gap-2">
+    <Clock className="w-4 h-4 text-amber-600" />
+    <span className="text-sm text-slate-700 dark:text-slate-300">
+      Pending Payments
+    </span>
+  </div>
+  <span className="font-semibold text-amber-600">
+    {payments?.unpaidCount || 0}
+  </span>
+</div>
+
             <div className="flex items-center justify-between p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-amber-600" />

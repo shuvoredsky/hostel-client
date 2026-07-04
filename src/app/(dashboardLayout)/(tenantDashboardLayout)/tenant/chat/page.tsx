@@ -2,6 +2,6 @@
 
 import ChatPage from "@/components/modules/Dashboard/ChatPage";
 
-export default function StudentChatPage() {
+export default function TenantChatPage() {
   return <ChatPage />;
 }

@@ -55,9 +55,7 @@ export const getSingleListing = async (id: string) => {
 
 export const createListing = async (formData: FormData) => {
   try {
-    const response = await httpClient.post<IListing>("/listings", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await httpClient.post<IListing>("/listings", formData);
     return response;
   } catch (error) {
     console.error("Error creating listing:", error);
@@ -79,13 +77,7 @@ export const getMyListings = async () => {
 
 export const updateListing = async (id: string, formData: FormData) => {
   try {
-    const response = await httpClient.patch<IListing>(
-      `/listings/owner/${id}`,
-      formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      }
-    );
+    const response = await httpClient.patch<IListing>(`/listings/owner/${id}`, formData);
     return response;
   } catch (error) {
     console.error("Error updating listing:", error);

@@ -1,21 +1,57 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, UserPlus, Mail, Lock, User, Home, Building } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  UserPlus,
+  Mail,
+  Lock,
+  User,
+  Building,
+  Briefcase,
+  Users,
+  Mars,
+  Venus,
+  Circle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { registerSchema, RegisterInput } from "@/zod/auth.validation";
-import { registerStudent, registerOwner } from "@/services/auth.client.services";
+import {
+  registerStudent,
+  registerOwner,
+  registerTenant,
+} from "@/services/auth.client.services";
 import { useAuth } from "@/providers/AuthProvider";
 import { getDefaultDashboardRoute } from "@/lib/authUtils";
 import { cn } from "@/lib/utils";
+
+const tenantTypeOptions = [
+  { value: "JOB_HOLDER", label: "Job Holder" },
+  { value: "FREELANCER", label: "Freelancer" },
+  { value: "INTERN", label: "Intern" },
+  { value: "BUSINESS_PERSON", label: "Business Person" },
+  { value: "FAMILY", label: "Family" },
+  { value: "OTHERS", label: "Others" },
+] as const;
+
+const professionOptions = [
+  { value: "SOFTWARE_ENGINEER", label: "Software Engineer" },
+  { value: "DOCTOR", label: "Doctor" },
+  { value: "TEACHER", label: "Teacher" },
+  { value: "BANKER", label: "Banker" },
+  { value: "FREELANCER", label: "Freelancer" },
+  { value: "BUSINESS", label: "Business" },
+  { value: "OTHERS", label: "Others" },
+] as const;
 
 export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -36,20 +72,38 @@ export default function RegisterForm() {
   });
 
   const selectedRole = watch("role");
+  const selectedGender = watch("gender");
+  const selectedTenantType = watch("tenantType");
 
   const onSubmit = async (data: RegisterInput) => {
     try {
       setIsLoading(true);
-      const payload = {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      };
 
-      const response =
-        data.role === "STUDENT"
-          ? await registerStudent(payload)
-          : await registerOwner(payload);
+      let response;
+
+      if (data.role === "STUDENT") {
+        response = await registerStudent({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          gender: data.gender!,
+        });
+      } else if (data.role === "TENANT") {
+        response = await registerTenant({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          gender: data.gender!,
+          tenantType: data.tenantType!,
+          profession: data.profession,
+        });
+      } else {
+        response = await registerOwner({
+          name: data.name,
+          email: data.email,
+          password: data.password,
+        });
+      }
 
       if (response?.data) {
         await refetchUser();
@@ -84,32 +138,45 @@ export default function RegisterForm() {
       </div>
 
       {/* Role Selector */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-3 gap-2 mb-6">
         <button
           type="button"
           onClick={() => setValue("role", "STUDENT")}
           className={cn(
-            "flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-medium",
+            "flex flex-col items-center justify-center gap-1 p-3 rounded-xl border-2 transition-all text-xs font-medium",
             selectedRole === "STUDENT"
               ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
               : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300"
           )}
         >
           <User className="w-4 h-4" />
-          I'm a Student
+          Student
+        </button>
+        <button
+          type="button"
+          onClick={() => setValue("role", "TENANT")}
+          className={cn(
+            "flex flex-col items-center justify-center gap-1 p-3 rounded-xl border-2 transition-all text-xs font-medium",
+            selectedRole === "TENANT"
+              ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+              : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+          )}
+        >
+          <Users className="w-4 h-4" />
+          Tenant
         </button>
         <button
           type="button"
           onClick={() => setValue("role", "OWNER")}
           className={cn(
-            "flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all text-sm font-medium",
+            "flex flex-col items-center justify-center gap-1 p-3 rounded-xl border-2 transition-all text-xs font-medium",
             selectedRole === "OWNER"
               ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
               : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300"
           )}
         >
           <Building className="w-4 h-4" />
-          I'm an Owner
+          Owner
         </button>
       </div>
 
@@ -152,6 +219,100 @@ export default function RegisterForm() {
             <p className="text-red-500 text-xs">{errors.email.message}</p>
           )}
         </div>
+
+        {/* Gender — Student & Tenant only */}
+        {(selectedRole === "STUDENT" || selectedRole === "TENANT") && (
+          <div className="space-y-1.5">
+            <Label className="text-slate-700 dark:text-slate-300">
+              Gender
+            </Label>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  { value: "MALE", label: "Male", icon: Mars },
+                  { value: "FEMALE", label: "Female", icon: Venus },
+                  { value: "OTHER", label: "Other", icon: Circle },
+                ] as const
+              ).map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setValue("gender", option.value)}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 p-2.5 rounded-lg border-2 transition-all text-xs font-medium",
+                    selectedGender === option.value
+                      ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+                      : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                  )}
+                >
+                  <option.icon className="w-3.5 h-3.5" />
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {errors.gender && (
+              <p className="text-red-500 text-xs">{errors.gender.message}</p>
+            )}
+          </div>
+        )}
+
+        {/* Tenant Type — Tenant only */}
+        {selectedRole === "TENANT" && (
+          <div className="space-y-1.5">
+            <Label className="text-slate-700 dark:text-slate-300">
+              Which best describes you?
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
+              {tenantTypeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setValue("tenantType", option.value)}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 p-2.5 rounded-lg border-2 transition-all text-xs font-medium",
+                    selectedTenantType === option.value
+                      ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+                      : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {errors.tenantType && (
+              <p className="text-red-500 text-xs">
+                {errors.tenantType.message}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Profession — Tenant only, optional */}
+        {selectedRole === "TENANT" && (
+          <div className="space-y-1.5">
+            <Label className="text-slate-700 dark:text-slate-300">
+              Profession{" "}
+              <span className="text-slate-400 font-normal">(optional)</span>
+            </Label>
+            <div className="relative">
+              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              <select
+                {...register("profession")}
+                defaultValue=""
+                className="w-full h-10 pl-10 pr-3 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+              >
+                <option value="" disabled>
+                  Select profession
+                </option>
+                {professionOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
 
         {/* Password */}
         <div className="space-y-1.5">

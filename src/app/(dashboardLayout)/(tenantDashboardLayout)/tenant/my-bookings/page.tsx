@@ -2,6 +2,6 @@
 
 import MyBookingsPageContent from "@/components/modules/Dashboard/MyBookingsPageContent";
 
-export default function StudentMyBookingsPage() {
+export default function TenantMyBookingsPage() {
   return <MyBookingsPageContent />;
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 import { cookies } from "next/headers";
 import { ApiResponse } from "@/types/api.types";
@@ -21,9 +20,18 @@ const axiosInstance = async () => {
     baseURL: API_BASE_URL,
     timeout: 30000,
     headers: {
-      "Content-Type": "application/json",
       Cookie: cookieHeader,
     },
+  });
+
+  instance.interceptors.request.use((config) => {
+    if (config.data instanceof FormData) {
+      if (config.headers) {
+        delete (config.headers as Record<string, unknown>)["Content-Type"];
+        delete (config.headers as Record<string, unknown>)["content-type"];
+      }
+    }
+    return config;
   });
 
   return instance;

@@ -2,6 +2,6 @@
 
 import MyPaymentsPageContent from "@/components/modules/Dashboard/MyPaymentsPageContent";
 
-export default function StudentMyPaymentsPage() {
+export default function TenantMyPaymentsPage() {
   return <MyPaymentsPageContent />;
 }

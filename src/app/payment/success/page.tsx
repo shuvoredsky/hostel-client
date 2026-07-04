@@ -8,20 +8,24 @@ import { CheckCircle, Home, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { useAuth } from "@/providers/AuthProvider";
+import { getMyBookingsRoute } from "@/lib/authUtils";
 
 // ✅ useSearchParams আলাদা component এ নিয়ে Suspense দিয়ে wrap করো
 function PaymentSuccessContent() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const transactionId = searchParams.get("transactionId");
   const [countdown, setCountdown] = useState(10);
+  const myBookingsRoute = user?.role ? getMyBookingsRoute(user.role) : "/student/my-bookings";
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push("/student/my-bookings");
+          router.push(myBookingsRoute);
           return 0;
         }
         return prev - 1;
@@ -76,7 +80,7 @@ function PaymentSuccessContent() {
 
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
-            href="/student/my-bookings"
+            href={myBookingsRoute}
             className={cn(
               buttonVariants({ size: "lg" }),
               "flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"

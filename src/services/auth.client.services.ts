@@ -1,5 +1,11 @@
 import browserClient from "@/lib/browserClient";
-import { IUser, ILoginInput, IRegisterInput } from "@/types/auth.types";
+import {
+  IUser,
+  ILoginInput,
+  IRegisterStudentInput,
+  IRegisterOwnerInput,
+  IRegisterTenantInput,
+} from "@/types/auth.types";
 import { ApiResponse } from "@/types/api.types";
 
 export const login = async (payload: ILoginInput) => {
@@ -10,7 +16,7 @@ export const login = async (payload: ILoginInput) => {
   return response.data;
 };
 
-export const registerStudent = async (payload: IRegisterInput) => {
+export const registerStudent = async (payload: IRegisterStudentInput) => {
   const response = await browserClient.post<ApiResponse<IUser>>(
     "/auth/register/student",
     payload
@@ -18,9 +24,17 @@ export const registerStudent = async (payload: IRegisterInput) => {
   return response.data;
 };
 
-export const registerOwner = async (payload: IRegisterInput) => {
+export const registerOwner = async (payload: IRegisterOwnerInput) => {
   const response = await browserClient.post<ApiResponse<IUser>>(
     "/auth/register/owner",
+    payload
+  );
+  return response.data;
+};
+
+export const registerTenant = async (payload: IRegisterTenantInput) => {
+  const response = await browserClient.post<ApiResponse<IUser>>(
+    "/auth/register/tenant",
     payload
   );
   return response.data;

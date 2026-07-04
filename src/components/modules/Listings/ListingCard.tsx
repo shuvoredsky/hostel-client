@@ -9,6 +9,7 @@ import { toggleWishlist } from "@/services/wishlist.services";
 import { useAuth } from "@/providers/AuthProvider";
 import { useState } from "react";
 import { toast } from "sonner";
+import ListingOfferBadges from "@/components/modules/Listings/ListingOfferBadges";
 
 const typeColors = {
   ROOM: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
@@ -28,6 +29,7 @@ interface ListingCardProps {
 
 export default function ListingCard({ listing }: ListingCardProps) {
   const { user, isAuthenticated } = useAuth();
+  const canBookOrInteract = user?.role === "STUDENT" || user?.role === "TENANT";
   const [isWishlisted, setIsWishlisted] = useState(
     listing.isWishlisted || false
   );
@@ -39,8 +41,12 @@ export default function ListingCard({ listing }: ListingCardProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isAuthenticated || user?.role !== "STUDENT") {
-      toast.error("Please login as a student to save listings");
+    if (!isAuthenticated) {
+      toast.error("Please login as a student or tenant to save listings");
+      return;
+    }
+    if (!canBookOrInteract) {
+      toast.error("Only students and tenants can save listings");
       return;
     }
 
@@ -90,20 +96,31 @@ export default function ListingCard({ listing }: ListingCardProps) {
           </span>
         </div>
 
-        {/* Wishlist Button */}
-        <button
-          onClick={handleWishlist}
-          disabled={isLoading}
-          className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-            isWishlisted
-              ? "bg-red-500 text-white"
-              : "bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-red-50 hover:text-red-500"
-          }`}
-        >
-          <Heart
-            className={`w-4 h-4 ${isWishlisted ? "fill-white" : ""}`}
-          />
-        </button>
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
+          {/* Offer Badges */}
+          <div className="min-w-[110px] max-w-[180px] text-right">
+            <ListingOfferBadges
+              studentDiscountPercent={listing.studentDiscountPercent}
+              genderPreference={listing.genderPreference}
+              variant="compact"
+            />
+          </div>
+
+          {/* Wishlist Button */}
+          <button
+            onClick={handleWishlist}
+            disabled={isLoading}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+              isWishlisted
+                ? "bg-red-500 text-white"
+                : "bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-red-50 hover:text-red-500"
+            }`}
+          >
+            <Heart
+              className={`w-4 h-4 ${isWishlisted ? "fill-white" : ""}`}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Content */}

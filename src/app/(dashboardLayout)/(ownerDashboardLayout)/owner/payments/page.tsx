@@ -60,10 +60,22 @@ export default function OwnerPaymentsPage() {
   const unpaidPayments = payments.filter((p) => p.status === "UNPAID");
   const failedPayments = payments.filter((p) => p.status === "FAILED");
 
-  const totalRevenue = paidPayments.reduce(
-    (sum, p) => sum + (p.totalAmount || p.amount || 0),
-    0
-  );
+const totalRevenue = paidPayments.reduce(
+  (sum, p) => sum + ((p.totalAmount || p.amount || 0) - (p.commission || 0)),
+  0
+);
+
+const totalGrossRevenue = paidPayments.reduce(
+  (sum, p) => sum + (p.totalAmount || p.amount || 0),
+  0
+);
+
+const totalCommissionDeducted = paidPayments.reduce(
+  (sum, p) => sum + (p.commission || 0),
+  0
+);
+
+
   const totalPending = unpaidPayments.reduce(
     (sum, p) => sum + (p.totalAmount || p.amount || 0),
     0
@@ -81,76 +93,82 @@ export default function OwnerPaymentsPage() {
         </p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">
-              {paidPayments.length} paid
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Total Revenue
-          </p>
-          <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            {formatPrice(totalRevenue)}
-          </p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">
-              {unpaidPayments.length} pending
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Pending Amount
-          </p>
-          <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            {formatPrice(totalPending)}
-          </p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
-              all time
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Total Transactions
-          </p>
-          <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            {payments.length}
-          </p>
-        </div>
-
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-            </div>
-            <span className="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">
-              {failedPayments.length} failed
-            </span>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Failed Payments
-          </p>
-          <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            {failedPayments.length}
-          </p>
-        </div>
+      
+    {/* Summary Cards */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+    <div className="flex items-center justify-between mb-3">
+      <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+        <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
       </div>
+      <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">
+        {paidPayments.length} paid
+      </span>
+    </div>
+    <p className="text-sm text-slate-500 dark:text-slate-400">
+      Total Revenue (Net)
+    </p>
+    <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+      {formatPrice(totalRevenue)}
+    </p>
+    <p className="text-xs text-slate-400 mt-1">
+      Gross: {formatPrice(totalGrossRevenue)} · Commission: -{formatPrice(totalCommissionDeducted)}
+    </p>
+  </div>
+
+  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+    <div className="flex items-center justify-between mb-3">
+      <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+        <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+      </div>
+      <span className="text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full">
+        {unpaidPayments.length} pending
+      </span>
+    </div>
+    <p className="text-sm text-slate-500 dark:text-slate-400">
+      Pending Amount
+    </p>
+    <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+      {formatPrice(totalPending)}
+    </p>
+  </div>
+
+  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+    <div className="flex items-center justify-between mb-3">
+      <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+        <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+      </div>
+      <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
+        all time
+      </span>
+    </div>
+    <p className="text-sm text-slate-500 dark:text-slate-400">
+      Total Transactions
+    </p>
+    <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+      {payments.length}
+    </p>
+  </div>
+
+  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+    <div className="flex items-center justify-between mb-3">
+      <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+        <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+      </div>
+      <span className="text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded-full">
+        {failedPayments.length} failed
+      </span>
+    </div>
+    <p className="text-sm text-slate-500 dark:text-slate-400">
+      Failed Payments
+    </p>
+    <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+      {failedPayments.length}
+    </p>
+  </div>
+</div>
+
+
 
       {/* Unpaid */}
       {unpaidPayments.length > 0 && (
@@ -258,6 +276,12 @@ function PaymentRow({
             >
               {payment.status}
             </span>
+
+            {payment.isInstallment && (
+  <span className="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 ml-2">
+    Installment {payment.installmentNo}/2
+  </span>
+)}
           </div>
 
           {payment.transactionId && (
@@ -288,11 +312,22 @@ function PaymentRow({
               </div>
             )}
             <div>
-              <span className="text-xs text-slate-400">Total</span>
-              <p className="text-lg font-bold text-emerald-600">
-                {formatPrice(amount)}
-              </p>
-            </div>
+  <span className="text-xs text-slate-400">
+    {payment.status === "PAID" ? "You Received (Net)" : "Total"}
+  </span>
+  <p className="text-lg font-bold text-emerald-600">
+    {formatPrice(
+      payment.status === "PAID"
+        ? amount - (payment.commission || 0)
+        : amount
+    )}
+  </p>
+  {payment.status === "PAID" && payment.commission > 0 && (
+    <p className="text-xs text-slate-400">
+      Gross {formatPrice(amount)} − Commission {formatPrice(payment.commission)}
+    </p>
+  )}
+</div>
           </div>
         </div>
       </div>
