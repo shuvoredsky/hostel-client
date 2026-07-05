@@ -4,8 +4,9 @@ import {
   getRouteOwner,
   isAuthRoute,
   isPublicRoute,
-  UserRole,
 } from "./lib/authUtils";
+
+import { UserRole } from "@/types/auth.types";
 
 function decodeJWT(token: string) {
   try {
