@@ -170,26 +170,28 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
           </p>
 
           {/* Search Bar */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 max-w-2xl mx-auto mb-10">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by area, university..."
-                className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-400 transition-colors"
-              />
-            </div>
-            <Link
-              href="/listings"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-xl whitespace-nowrap"
-              )}
-            >
-              Search Now
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Link>
-          </div>
+<div className="max-w-2xl mx-auto mb-10">
+  <div className="relative w-full">
+    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 z-10" />
+    <input
+      type="text"
+      placeholder="Search by area, university..."
+      className="w-full pl-12 pr-32 sm:pr-36 py-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-400 transition-colors"
+    />
+    <Link
+      href="/listings"
+      className={cn(
+        buttonVariants({ size: "lg" }),
+        "absolute right-1.5 top-1/2 -translate-y-1/2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 sm:px-6 py-2.5 rounded-lg whitespace-nowrap"
+      )}
+    >
+      <span className="hidden sm:inline">Search Now</span>
+      <ArrowRight className="w-4 h-4 sm:ml-2" />
+    </Link>
+  </div>
+</div>
+
+
 
           {/* Popular Areas */}
           <div className="flex flex-wrap items-center justify-center gap-2 mb-16">
