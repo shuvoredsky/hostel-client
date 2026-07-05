@@ -5,58 +5,45 @@ import Link from "next/link";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Form */}
-      <div className="flex-1 flex items-center justify-center px-4 py-12 bg-white dark:bg-slate-950">
-        <div className="w-full max-w-md">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 mb-10">
-            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
-              <Home className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-xl font-bold text-slate-900 dark:text-white">
-              Dhaka<span className="text-emerald-600">Stay</span>
-            </span>
-          </Link>
-          <Suspense fallback={<div className="text-center py-8">Loading form...</div>}>
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-950 px-4 py-12">
+      {/* Background Grid */}
+      <div
+        className="absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, #64748b 1px, transparent 1px), linear-gradient(to bottom, #64748b 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+        }}
+      />
+
+      {/* Background Glows */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl" />
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-700/10 rounded-full blur-3xl" />
+
+      {/* Content */}
+      <div className="relative w-full max-w-md">
+        {/* Logo */}
+        <Link href="/" className="flex items-center justify-center gap-2 mb-8">
+          <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center">
+            <Home className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-xl font-bold text-white">
+            Dhaka<span className="text-emerald-500">Stay</span>
+          </span>
+        </Link>
+
+        {/* Form Card */}
+        <div className="bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-3xl p-8 sm:p-10 shadow-2xl">
+          <Suspense
+            fallback={
+              <div className="text-center py-8 text-slate-400">
+                Loading form...
+              </div>
+            }
+          >
             <LoginForm />
           </Suspense>
-        </div>
-      </div>
-
-      {/* Right Side - Visual */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 items-center justify-center p-12">
-        <div className="text-center text-white max-w-sm">
-          {/* Decorative */}
-          <div className="w-24 h-24 rounded-3xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-8">
-            <Home className="w-12 h-12 text-emerald-400" />
-          </div>
-          <h2 className="text-3xl font-bold mb-4">
-            Your Home Away From Home
-          </h2>
-          <p className="text-slate-300 leading-relaxed mb-8">
-            Join thousands of students who found their perfect housing in Dhaka
-            through DhakaStay.
-          </p>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { value: "500+", label: "Listings" },
-              { value: "2000+", label: "Students" },
-              { value: "4.8★", label: "Rating" },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="bg-white/5 border border-white/10 rounded-xl p-3"
-              >
-                <div className="text-xl font-bold text-emerald-400">
-                  {stat.value}
-                </div>
-                <div className="text-xs text-slate-400">{stat.label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     </div>
