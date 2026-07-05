@@ -152,12 +152,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
           {listing.title}
         </h3>
 
-        <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-sm mb-3">
-          <MapPin className="w-3.5 h-3.5 shrink-0" />
-          <span className="truncate">
-            {listing.area}, {listing.city}
-          </span>
-        </div>
+
 
             <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-sm mb-3">
           <MapPin className="w-3.5 h-3.5 shrink-0" />
