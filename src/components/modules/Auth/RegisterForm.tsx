@@ -19,6 +19,7 @@ import {
   Mars,
   Venus,
   Circle,
+  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -102,6 +103,7 @@ export default function RegisterForm() {
           name: data.name,
           email: data.email,
           password: data.password,
+          whatsappNumber: data.whatsappNumber!,
         });
       }
 
@@ -111,9 +113,20 @@ export default function RegisterForm() {
         const user = response.data;
         router.push(getDefaultDashboardRoute(user.role));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message =
-        error?.response?.data?.message || "Registration failed. Try again.";
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "data" in error.response &&
+        error.response.data &&
+        typeof error.response.data === "object" &&
+        "message" in error.response.data &&
+        typeof error.response.data.message === "string"
+          ? error.response.data.message
+          : "Registration failed. Try again.";
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -219,6 +232,28 @@ export default function RegisterForm() {
             <p className="text-red-500 text-xs">{errors.email.message}</p>
           )}
         </div>
+
+        {selectedRole === "OWNER" && (
+          <div className="space-y-1.5">
+            <Label className="text-slate-700 dark:text-slate-300">
+              Contact Number (WhatsApp)
+            </Label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                type="tel"
+                placeholder="01XXXXXXXXX"
+                className="pl-10"
+                {...register("whatsappNumber")}
+              />
+            </div>
+            {errors.whatsappNumber && (
+              <p className="text-red-500 text-xs">
+                {errors.whatsappNumber.message}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Gender — Student & Tenant only */}
         {(selectedRole === "STUDENT" || selectedRole === "TENANT") && (

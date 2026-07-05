@@ -28,6 +28,7 @@ export interface IUser {
   status: UserStatus;
   image?: string;
   phone?: string;
+  whatsappNumber?: string;
   gender?: Gender;
   profession?: Profession;
   isEmailVerified: boolean;
@@ -51,7 +52,9 @@ export interface IRegisterStudentInput extends IRegisterInput {
   gender: Gender;
 }
 
-export interface IRegisterOwnerInput extends IRegisterInput {}
+export interface IRegisterOwnerInput extends IRegisterInput {
+  whatsappNumber: string;
+}
 
 export interface IRegisterTenantInput extends IRegisterInput {
   gender: Gender;

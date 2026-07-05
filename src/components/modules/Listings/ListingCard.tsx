@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Star, BedDouble, Users, Heart } from "lucide-react";
+import { MapPin, Star, BedDouble, Users, Heart, Wifi, Droplet, Snowflake, ArrowUpDown, ShieldCheck, Camera, ParkingCircle, Flame } from "lucide-react";
 import { IListing } from "@/types/listing.types";
 import { formatPrice } from "@/lib/utils";
 import { toggleWishlist } from "@/services/wishlist.services";
@@ -23,6 +23,16 @@ const typeIcons = {
   BASHA: BedDouble,
 };
 
+const AMENITY_ICON_MAP: Record<string, { icon: typeof Wifi; label: string }> = {
+  WIFI: { icon: Wifi, label: "WiFi" },
+  FILTERED_WATER: { icon: Droplet, label: "Water" },
+  AC: { icon: Snowflake, label: "AC" },
+  LIFT: { icon: ArrowUpDown, label: "Lift" },
+  SECURITY_24_7: { icon: ShieldCheck, label: "Security" },
+  CCTV: { icon: Camera, label: "CCTV" },
+  PARKING: { icon: ParkingCircle, label: "Parking" },
+};
+
 interface ListingCardProps {
   listing: IListing;
 }
@@ -36,6 +46,9 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const TypeIcon = typeIcons[listing.type];
   const firstImage = listing.images?.[0]?.url;
+
+  const topAmenities = (listing.amenities || []).slice(0, 3);
+  const hasGas = listing.gasType && listing.gasType !== "NOT_AVAILABLE";
 
   const handleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -145,6 +158,35 @@ export default function ListingCard({ listing }: ListingCardProps) {
             {listing.area}, {listing.city}
           </span>
         </div>
+
+            <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-sm mb-3">
+          <MapPin className="w-3.5 h-3.5 shrink-0" />
+          <span className="truncate">
+            {listing.area}, {listing.city}
+          </span>
+        </div>
+
+
+        {(topAmenities.length > 0 || hasGas) && (
+          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-3 pb-3 border-b border-slate-100 dark:border-slate-700">
+            {topAmenities.map((amenity) => {
+              const config = AMENITY_ICON_MAP[amenity];
+              if (!config) return null;
+              return (
+                <div key={amenity} className="flex items-center gap-1">
+                  <config.icon className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{config.label}</span>
+                </div>
+              );
+            })}
+            {hasGas && (
+              <div className="flex items-center gap-1">
+                <Flame className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Gas</span>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center justify-between">
           <div>

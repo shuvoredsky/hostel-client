@@ -32,6 +32,8 @@ export const professionEnum = z.enum([
   "OTHERS",
 ]);
 
+const bdPhoneNumberRegex = /^01\d{9}$/;
+
 export const registerSchema = z
   .object({
     name: z
@@ -48,6 +50,7 @@ export const registerSchema = z
       .min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
     role: z.enum(["STUDENT", "OWNER", "TENANT"]),
+    whatsappNumber: z.string().optional(),
     gender: genderEnum.optional(),
     tenantType: tenantTypeEnum.optional(),
     profession: professionEnum.optional(),
@@ -69,7 +72,21 @@ export const registerSchema = z
   .refine((data) => (data.role === "TENANT" ? !!data.tenantType : true), {
     message: "Please select what best describes you",
     path: ["tenantType"],
-  });
+  })
+  .refine((data) => (data.role === "OWNER" ? !!data.whatsappNumber : true), {
+    message: "WhatsApp number is required",
+    path: ["whatsappNumber"],
+  })
+  .refine(
+    (data) =>
+      data.role === "OWNER" && data.whatsappNumber
+        ? bdPhoneNumberRegex.test(data.whatsappNumber)
+        : true,
+    {
+      message: "WhatsApp number must be 11 digits and start with 01",
+      path: ["whatsappNumber"],
+    }
+  );
 
 export const forgotPasswordSchema = z.object({
   email: z

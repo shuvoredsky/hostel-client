@@ -12,6 +12,7 @@ import {
   Share2,
   MessageCircle ,
   Mail,
+  Phone,
   Calendar,
   CheckCircle,
   ArrowLeft,
@@ -26,6 +27,7 @@ import { toggleWishlist } from "@/services/wishlist.services";
 import { createBooking } from "@/services/booking.services";
 import ReviewSection from "./ReviewSection";
 import ListingOfferBadges from "./ListingOfferBadges";
+import ListingAmenities from "./ListingAmenities";
 
 interface ListingDetailsProps {
   listing: IListing;
@@ -52,6 +54,10 @@ export default function ListingDetails({ listing }: ListingDetailsProps) {
   const [paymentPlan, setPaymentPlan] = useState<"FULL" | "HALF_MONTHLY">("FULL");
 
   const images = listing.images || [];
+  const ownerWhatsappNumber = listing.owner?.whatsappNumber;
+  const ownerWhatsappUrl = ownerWhatsappNumber
+    ? `https://wa.me/${ownerWhatsappNumber.replace(/^0/, "880")}`
+    : null;
 
   const handleWishlist = async () => {
     if (!isAuthenticated) {
@@ -146,9 +152,20 @@ export default function ListingDetails({ listing }: ListingDetailsProps) {
         ? getMyBookingsRoute(user.role)
         : "/student/my-bookings";
       router.push(myBookingsRoute);
-    } catch (error: any) {
+    } catch (error: unknown) {
       const msg =
-        error?.response?.data?.message || "Failed to send booking request";
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        error.response &&
+        typeof error.response === "object" &&
+        "data" in error.response &&
+        error.response.data &&
+        typeof error.response.data === "object" &&
+        "message" in error.response.data &&
+        typeof error.response.data.message === "string"
+          ? error.response.data.message
+          : "Failed to send booking request";
       toast.error(msg);
     } finally {
       setIsBookingLoading(false);
@@ -421,6 +438,15 @@ const handleMessageOwner = async () => {
               </div>
             </div>
 
+
+            <ListingAmenities
+              amenities={listing.amenities}
+              gasType={listing.gasType}
+              nearbyType={listing.nearbyType}
+              nearbyName={listing.nearbyName}
+            />
+
+
             {/* Reviews */}
             <ReviewSection listingId={listing.id} />
           </div>
@@ -595,6 +621,23 @@ const handleMessageOwner = async () => {
                     <Mail className="w-4 h-4 text-emerald-600" />
                     <span>{listing.owner?.email}</span>
                   </div>
+                  {ownerWhatsappNumber && (
+                    <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                      <Phone className="w-4 h-4 text-emerald-600" />
+                      {ownerWhatsappUrl ? (
+                        <a
+                          href={ownerWhatsappUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-emerald-600 hover:text-emerald-700"
+                        >
+                          {ownerWhatsappNumber}
+                        </a>
+                      ) : (
+                        <span>{ownerWhatsappNumber}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

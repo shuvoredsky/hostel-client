@@ -6,6 +6,18 @@ export type StudentDiscountPercent = 0 | 5 | 10 | 15;
 export type AdvanceOption = "NO_ADVANCE" | "ONE_MONTH" | "TWO_MONTH";
 export type GenderPreference = "BOYS" | "GIRLS" | "ANYONE";
 
+
+export type Amenity =
+  | "WIFI"
+  | "FILTERED_WATER"
+  | "AC"
+  | "LIFT"
+  | "SECURITY_24_7"
+  | "CCTV"
+  | "PARKING";
+export type GasType = "CYLINDER" | "SUPPLY" | "NOT_AVAILABLE";
+export type NearbyLandmarkType = "UNIVERSITY" | "METRO_STATION" | "BUS_STOP";
+
 export interface IListingImage {
   id: string;
   url: string;
@@ -27,12 +39,16 @@ export interface IListing {
   advanceOption: AdvanceOption;
   genderPreference: GenderPreference;
   allowHalfMonthlyPay: boolean;
+  amenities: Amenity[];
+  gasType: GasType;
+  nearbyType?: NearbyLandmarkType;
+  nearbyName?: string;
   images: IListingImage[];
   status: ListingStatus;
   isAvailable: boolean;
   isDeleted: boolean;
   ownerId: string;
-  owner: Pick<IUser, "id" | "name" | "email">;
+  owner: Pick<IUser, "id" | "name" | "email" | "whatsappNumber">;
   avgRating: number;
   totalReviews: number;
   isWishlisted?: boolean;
@@ -71,4 +87,4 @@ export interface ICreateListingInput {
   images: File[];
 }
 
-export interface IUpdateListingInput extends Partial<ICreateListingInput> {}
+export type IUpdateListingInput = Partial<ICreateListingInput>;

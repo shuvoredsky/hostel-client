@@ -13,6 +13,16 @@ import {
   FileText,
   X,
   Loader2,
+  Wifi,
+  Droplet,
+  Snowflake,
+  ArrowUpDown,
+  ShieldCheck,
+  Camera,
+  ParkingCircle,
+  GraduationCap,
+  TrainFront,
+  Bus,
   Upload,
   BedDouble,
   Users,
@@ -49,7 +59,22 @@ const createListingSchema = z.object({
     error: "Please select a gender preference",
   }),
   allowHalfMonthlyPay: z.boolean(),
+  amenities: z.array(
+    z.enum(["WIFI", "FILTERED_WATER", "AC", "LIFT", "SECURITY_24_7", "CCTV", "PARKING"])
+  ),
+  gasType: z.enum(["CYLINDER", "SUPPLY", "NOT_AVAILABLE"]),
+  nearbyType: z.enum(["UNIVERSITY", "METRO_STATION", "BUS_STOP"]).optional(),
+  nearbyName: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.nearbyType && !data.nearbyName?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Please enter the name/location",
+      path: ["nearbyName"],
+    });
+  }
 });
+
 
 type CreateListingFormData = z.infer<typeof createListingSchema>;
 
@@ -87,6 +112,31 @@ const GENDER_PREFERENCE_OPTIONS = [
   { value: "ANYONE", label: "Anyone" },
 ] as const;
 
+
+
+const AMENITY_OPTIONS = [
+  { value: "WIFI", label: "WiFi", icon: Wifi },
+  { value: "FILTERED_WATER", label: "Filtered Water", icon: Droplet },
+  { value: "AC", label: "AC", icon: Snowflake },
+  { value: "LIFT", label: "Lift", icon: ArrowUpDown },
+  { value: "SECURITY_24_7", label: "24/7 Security", icon: ShieldCheck },
+  { value: "CCTV", label: "CCTV", icon: Camera },
+  { value: "PARKING", label: "Parking", icon: ParkingCircle },
+] as const;
+
+const GAS_TYPE_OPTIONS = [
+  { value: "CYLINDER", label: "Cylinder" },
+  { value: "SUPPLY", label: "Supply Line" },
+  { value: "NOT_AVAILABLE", label: "Not Available" },
+] as const;
+
+const NEARBY_TYPE_OPTIONS = [
+  { value: "UNIVERSITY", label: "University", icon: GraduationCap, placeholder: "e.g. Dhaka University" },
+  { value: "METRO_STATION", label: "Metro Station", icon: TrainFront, placeholder: "e.g. Kazipara Metro Station" },
+  { value: "BUS_STOP", label: "Bus Stop", icon: Bus, placeholder: "e.g. Mirpur 10 Bus Stop" },
+] as const;
+
+
 export default function CreateListingPage() {
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -109,6 +159,8 @@ export default function CreateListingPage() {
       advanceOption: "NO_ADVANCE",
       genderPreference: "ANYONE",
       allowHalfMonthlyPay: false,
+      amenities: [],
+      gasType: "NOT_AVAILABLE",
     },
   });
 
@@ -117,6 +169,9 @@ export default function CreateListingPage() {
   const selectedAdvance = useWatch({ control, name: "advanceOption" }) as CreateListingFormData["advanceOption"];
   const selectedGenderPreference = useWatch({ control, name: "genderPreference" }) as CreateListingFormData["genderPreference"];
   const allowHalfMonthlyPay = useWatch({ control, name: "allowHalfMonthlyPay" }) as boolean;
+  const selectedAmenities = useWatch({ control, name: "amenities" }) as CreateListingFormData["amenities"];
+  const selectedGasType = useWatch({ control, name: "gasType" }) as CreateListingFormData["gasType"];
+  const selectedNearbyType = useWatch({ control, name: "nearbyType" }) as CreateListingFormData["nearbyType"];
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -158,6 +213,10 @@ export default function CreateListingPage() {
     formData.append("advanceOption", data.advanceOption);
     formData.append("genderPreference", data.genderPreference);
     formData.append("allowHalfMonthlyPay", String(data.allowHalfMonthlyPay));
+    formData.append("amenities", JSON.stringify(data.amenities));
+    formData.append("gasType", data.gasType);
+    if (data.nearbyType) formData.append("nearbyType", data.nearbyType);
+    if (data.nearbyName) formData.append("nearbyName", data.nearbyName);
     images.forEach((img) => formData.append("images", img));
 
     try {
@@ -485,6 +544,115 @@ export default function CreateListingPage() {
             </div>
           </div>
         </div>
+
+
+                {/* Amenities & Nearby */}
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
+          <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
+            Amenities & Nearby
+          </h3>
+
+          <div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Amenities
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {AMENITY_OPTIONS.map((option) => {
+                const isSelected = selectedAmenities?.includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      const current = selectedAmenities || [];
+                      setValue(
+                        "amenities",
+                        isSelected
+                          ? current.filter((v) => v !== option.value)
+                          : [...current, option.value]
+                      );
+                    }}
+                    className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-all ${
+                      isSelected
+                        ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                    }`}
+                  >
+                    <option.icon className="w-3.5 h-3.5" />
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Gas Type
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {GAS_TYPE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setValue("gasType", option.value)}
+                  className={`rounded-full border px-4 py-2 text-sm font-medium transition-all ${
+                    selectedGasType === option.value
+                      ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Nearby Landmark
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {NEARBY_TYPE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() =>
+                    setValue(
+                      "nearbyType",
+                      selectedNearbyType === option.value ? undefined : option.value
+                    )
+                  }
+                  className={`flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-all ${
+                    selectedNearbyType === option.value
+                      ? "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                  }`}
+                >
+                  <option.icon className="w-3.5 h-3.5" />
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            {selectedNearbyType && (
+              <div className="mt-3">
+                <input
+                  {...register("nearbyName")}
+                  placeholder={
+                    NEARBY_TYPE_OPTIONS.find((o) => o.value === selectedNearbyType)
+                      ?.placeholder
+                  }
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                />
+                {errors.nearbyName && (
+                  <p className="text-xs text-red-500 mt-1">{errors.nearbyName.message}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
 
         {/* Images */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
