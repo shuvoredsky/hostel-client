@@ -12,9 +12,16 @@ interface PaymentHistoryProps {
 }
 
 export default function PaymentHistory({ payments }: PaymentHistoryProps) {
-  const paidPayments = payments.filter((p) => p.status === "PAID");
-  const unpaidPayments = payments.filter((p) => p.status === "UNPAID");
-  const failedPayments = payments.filter((p) => p.status === "FAILED");
+  const hasPartialPayment = (p: any) =>
+  p.installments?.some((i: any) => i.status === "PAID");
+
+const paidPayments = payments.filter(
+  (p) => p.status === "PAID" || hasPartialPayment(p)
+);
+const unpaidPayments = payments.filter(
+  (p) => p.status === "UNPAID" && !hasPartialPayment(p)
+);
+const failedPayments = payments.filter((p) => p.status === "FAILED");
 
   const totalPaid = paidPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
   const totalDue = unpaidPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
@@ -101,10 +108,23 @@ export default function PaymentHistory({ payments }: PaymentHistoryProps) {
           </div>
 
           <div className="space-y-3">
-            {paidPayments.map((payment: any) => (
-              <PaymentCard key={payment.id} payment={payment} showInvoice />
-            ))}
-          </div>
+  {paidPayments.map((payment: any) => {
+    const isFullyPaid = payment.status === "PAID";
+    const hasPending = payment.installments?.some(
+      (i: any) => i.status === "PENDING"
+    );
+    return (
+      <PaymentCard
+        key={payment.id}
+        payment={payment}
+        showInvoice
+        showInitiate={!isFullyPaid && hasPending}
+      />
+    );
+  })}
+</div>
+
+
         </div>
       )}
 

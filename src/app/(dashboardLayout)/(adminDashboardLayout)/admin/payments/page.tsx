@@ -202,10 +202,11 @@ setSummary({
                           {payment.paidAt ? formatDate(payment.paidAt) : "—"}
                         </td>
                         <td className="px-5 py-4 text-right">
-                          {payment.status === "PAID" && (
-                            <InvoiceDownloadButton paymentId={payment.id} />
-                          )}
-                        </td>
+  {(payment.status === "PAID" ||
+    payment.installments?.some((i: any) => i.status === "PAID")) && (
+    <InvoiceDownloadButton paymentId={payment.id} />
+  )}
+</td>
                       </tr>
                     ))}
                   </tbody>

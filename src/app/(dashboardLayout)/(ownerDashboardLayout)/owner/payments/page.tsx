@@ -349,9 +349,9 @@ function PaymentRow({
           )}
         </div>
 
-        {showInvoice && payment.id && (
-          <InvoiceDownloadButton paymentId={payment.id} />
-        )}
+       {showInvoice && payment.paymentId && (
+  <InvoiceDownloadButton paymentId={payment.paymentId} />
+)}
       </div>
     </div>
   );
