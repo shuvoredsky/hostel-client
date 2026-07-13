@@ -84,14 +84,23 @@ export default function ListingDetails({ listing }: ListingDetailsProps) {
   };
 
   const genderAllowed = useMemo(() => {
+    if (listing.genderPreference === "FAMILY") {
+      return user?.role === "TENANT";
+    }
     if (listing.genderPreference === "ANYONE") return true;
     if (!user?.gender) return false;
     if (listing.genderPreference === "BOYS") return user.gender === "MALE";
     if (listing.genderPreference === "GIRLS") return user.gender === "FEMALE";
     return false;
-  }, [listing.genderPreference, user?.gender]);
+  }, [listing.genderPreference, user?.gender, user?.role]);
 
   const genderRestrictionMessage = useMemo(() => {
+    if (listing.genderPreference === "FAMILY") {
+      if (user && user.role !== "TENANT") {
+        return "This listing is reserved for tenant/family bookings. Students cannot book this listing.";
+      }
+      return null;
+    }
     if (listing.genderPreference === "ANYONE") return null;
     if (!user?.gender) {
       return `This listing is restricted to ${
@@ -104,7 +113,7 @@ export default function ListingDetails({ listing }: ListingDetailsProps) {
       } students.`;
     }
     return null;
-  }, [genderAllowed, listing.genderPreference, user?.gender]);
+  }, [genderAllowed, listing.genderPreference, user?.gender, user?.role, user]);
 
   const halfMonthlyPreview = useMemo(() => {
     if (paymentPlan !== "HALF_MONTHLY" || !listing.allowHalfMonthlyPay) {
@@ -307,6 +316,25 @@ const handleMessageOwner = async () => {
                   {listing.address}, {listing.area}, {listing.city}
                 </span>
               </div>
+
+              {listing.googleMapsLink && (
+                <div className="mb-6">
+                  <a
+                    href={listing.googleMapsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex"
+                  >
+                    <Button
+                      variant="outline"
+                      className="border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                    >
+                      <MapPin className="w-4 h-4 mr-2" />
+                      View on Google Maps
+                    </Button>
+                  </a>
+                </div>
+              )}
 
               {/* Rating */}
               {listing.avgRating > 0 && (

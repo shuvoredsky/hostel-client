@@ -4,7 +4,7 @@ export type ListingType = "ROOM" | "SEAT" | "BASHA";
 export type ListingStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type StudentDiscountPercent = 0 | 5 | 10 | 15;
 export type AdvanceOption = "NO_ADVANCE" | "ONE_MONTH" | "TWO_MONTH";
-export type GenderPreference = "BOYS" | "GIRLS" | "ANYONE";
+export type GenderPreference = "BOYS" | "GIRLS" | "FAMILY" | "ANYONE";
 
 
 export type Amenity =
@@ -43,6 +43,7 @@ export interface IListing {
   gasType: GasType;
   nearbyType?: NearbyLandmarkType;
   nearbyName?: string;
+  googleMapsLink?: string;
   images: IListingImage[];
   status: ListingStatus;
   isAvailable: boolean;
@@ -68,6 +69,7 @@ export interface IListingFilters {
   sortOrder?: "asc" | "desc";
   page?: number;
   limit?: number;
+  genderPreference?: GenderPreference;
 }
 
 export interface ICreateListingInput {
@@ -84,6 +86,7 @@ export interface ICreateListingInput {
   advanceOption: AdvanceOption;
   genderPreference: GenderPreference;
   allowHalfMonthlyPay: boolean;
+  googleMapsLink?: string;
   images: File[];
 }
 

@@ -21,6 +21,13 @@ const sortOptions = [
   { value: "price-desc", label: "Price: High to Low" },
 ];
 
+const genderOptions = [
+  { value: "", label: "All" },
+  { value: "BOYS", label: "Boys Only" },
+  { value: "GIRLS", label: "Girls Only" },
+  { value: "FAMILY", label: "Family" },
+];
+
 const popularAreas = [
   "Mirpur",
   "Dhanmondi",
@@ -54,6 +61,9 @@ export default function ListingFilters({ filters }: ListingFiltersProps) {
       ? `${filters.sortBy}-${filters.sortOrder || "asc"}`
       : ""
   );
+  const [genderPreference, setGenderPreference] = useState(
+    filters.genderPreference || ""
+  );
 
   const applyFilters = () => {
     const params = new URLSearchParams();
@@ -67,6 +77,7 @@ export default function ListingFilters({ filters }: ListingFiltersProps) {
       params.set("sortBy", sortBy);
       params.set("sortOrder", sortOrder);
     }
+    if (genderPreference) params.set("genderPreference", genderPreference);
     params.set("page", "1");
     router.push(`/listings?${params.toString()}`);
   };
@@ -78,11 +89,12 @@ export default function ListingFilters({ filters }: ListingFiltersProps) {
     setMinPrice("");
     setMaxPrice("");
     setSort("");
+    setGenderPreference("");
     router.push("/listings");
   };
 
   const hasActiveFilters =
-    search || type || area || minPrice || maxPrice || sort;
+    search || type || area || minPrice || maxPrice || sort || genderPreference;
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-5">
@@ -139,6 +151,28 @@ export default function ListingFilters({ filters }: ListingFiltersProps) {
               }`}
             >
               {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Gender / Group Preference */}
+      <div className="space-y-1.5">
+        <Label className="text-slate-700 dark:text-slate-300 text-sm">
+          Gender / Family Preference
+        </Label>
+        <div className="grid grid-cols-2 gap-2">
+          {genderOptions.map((g) => (
+            <button
+              key={g.value}
+              onClick={() => setGenderPreference(g.value as any)}
+              className={`py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
+                genderPreference === g.value
+                  ? "bg-emerald-600 text-white border-emerald-600"
+                  : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-emerald-400"
+              }`}
+            >
+              {g.label}
             </button>
           ))}
         </div>

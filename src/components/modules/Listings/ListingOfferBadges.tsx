@@ -19,6 +19,10 @@ const getGenderBadgeStyles = (genderPreference: GenderPreference) => {
     return "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700";
   }
 
+  if (genderPreference === "FAMILY") {
+    return "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700";
+  }
+
   return "";
 };
 
@@ -42,8 +46,17 @@ export default function ListingOfferBadges({
   }
 
   if (genderPreference !== "ANYONE") {
+    let label = "";
+    if (genderPreference === "BOYS") {
+      label = "Boys Only";
+    } else if (genderPreference === "GIRLS") {
+      label = "Girls Only";
+    } else if (genderPreference === "FAMILY") {
+      label = "Family";
+    }
+
     badges.push({
-      label: genderPreference === "BOYS" ? "Boys Only" : "Girls Only",
+      label,
       className: `${getGenderBadgeStyles(genderPreference)}`,
     });
   }

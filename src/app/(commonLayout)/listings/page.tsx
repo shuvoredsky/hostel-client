@@ -16,6 +16,7 @@ interface ListingsPageProps {
     sortBy?: string;
     sortOrder?: string;
     page?: string;
+    genderPreference?: string;
   }>;
 }
 
@@ -35,6 +36,7 @@ export default async function ListingsPage({
     sortOrder: params.sortOrder as any,
     page: params.page ? Number(params.page) : 1,
     limit: 9,
+    genderPreference: params.genderPreference as any,
   };
 
   let listings: IListing[] = [];
@@ -100,6 +102,7 @@ export default async function ListingsPage({
                       if (params.maxPrice) pageParams.set("maxPrice", params.maxPrice);
                       if (params.sortBy) pageParams.set("sortBy", params.sortBy);
                       if (params.sortOrder) pageParams.set("sortOrder", params.sortOrder);
+                      if (params.genderPreference) pageParams.set("genderPreference", params.genderPreference);
                       pageParams.set("page", pageNum.toString());
                       
                       return (

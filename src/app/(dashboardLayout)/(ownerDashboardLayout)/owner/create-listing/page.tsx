@@ -55,7 +55,7 @@ const createListingSchema = z.object({
   advanceOption: z.enum(["NO_ADVANCE", "ONE_MONTH", "TWO_MONTH"], {
     error: "Please select an advance option",
   }),
-  genderPreference: z.enum(["BOYS", "GIRLS", "ANYONE"], {
+  genderPreference: z.enum(["BOYS", "GIRLS", "FAMILY", "ANYONE"], {
     error: "Please select a gender preference",
   }),
   allowHalfMonthlyPay: z.boolean(),
@@ -65,6 +65,15 @@ const createListingSchema = z.object({
   gasType: z.enum(["CYLINDER", "SUPPLY", "NOT_AVAILABLE"]),
   nearbyType: z.enum(["UNIVERSITY", "METRO_STATION", "BUS_STOP"]).optional(),
   nearbyName: z.string().optional(),
+  googleMapsLink: z
+    .string()
+    .url("Please enter a valid URL")
+    .refine(
+      (val) => val.includes("google.com/maps") || val.includes("goo.gl") || val.includes("maps.app.goo.gl"),
+      "Please enter a valid Google Maps link"
+    )
+    .optional()
+    .or(z.literal("")),
 }).superRefine((data, ctx) => {
   if (data.nearbyType && !data.nearbyName?.trim()) {
     ctx.addIssue({
@@ -109,6 +118,7 @@ const ADVANCE_OPTIONS = [
 const GENDER_PREFERENCE_OPTIONS = [
   { value: "BOYS", label: "Boys Only" },
   { value: "GIRLS", label: "Girls Only" },
+  { value: "FAMILY", label: "Family" },
   { value: "ANYONE", label: "Anyone" },
 ] as const;
 
@@ -217,6 +227,7 @@ export default function CreateListingPage() {
     formData.append("gasType", data.gasType);
     if (data.nearbyType) formData.append("nearbyType", data.nearbyType);
     if (data.nearbyName) formData.append("nearbyName", data.nearbyName);
+    if (data.googleMapsLink) formData.append("googleMapsLink", data.googleMapsLink);
     images.forEach((img) => formData.append("images", img));
 
     try {
@@ -444,6 +455,27 @@ export default function CreateListingPage() {
                 <p className="text-xs text-red-500">{errors.city.message}</p>
               )}
             </div>
+          </div>
+
+          {/* Google Maps Link */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Google Maps Link (Optional)
+            </label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                {...register("googleMapsLink")}
+                placeholder="e.g. https://maps.app.goo.gl/..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+              />
+            </div>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+              Open Google Maps, find your property, tap Share, and copy the link here.
+            </p>
+            {errors.googleMapsLink && (
+              <p className="text-xs text-red-500 mt-1">{errors.googleMapsLink.message}</p>
+            )}
           </div>
         </div>
 
