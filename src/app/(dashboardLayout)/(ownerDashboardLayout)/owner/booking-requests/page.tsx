@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import browserClient from "@/lib/browserClient";
 import { formatDate, formatPrice, getStatusColor } from "@/lib/utils";
@@ -8,30 +8,55 @@ import { ClipboardList, MapPin, Calendar, MessageSquare, BookOpen } from "lucide
 import Image from "next/image";
 import BookingStatusButtons from "./BookingStatusButtons";
 import AddExtraChargeButton from "./AddExtraChargeButton";
+import { getSupabaseClient } from "@/lib/supabase";
 
 export default function BookingRequestsPage() {
-  const { isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchBookings = useCallback(async (showLoading = true) => {
+    try {
+      if (showLoading) setIsLoading(true);
+      const response = await browserClient.get("/bookings/owner/requests");
+      setBookings(response?.data?.data || []);
+      setError(null);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to load booking requests");
+      setBookings([]);
+    } finally {
+      if (showLoading) setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setIsLoading(true);
-        const response = await browserClient.get("/bookings/owner/requests");
-        setBookings(response?.data?.data || []);
-        setError(null);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load booking requests");
-        setBookings([]);
-      } finally {
-        setIsLoading(false);
+    fetchBookings(true);
+  }, [fetchBookings]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let activeChannel: any;
+
+    getSupabaseClient().then((supabaseClient) => {
+      activeChannel = supabaseClient.channel("booking-requests-realtime")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "Booking", filter: `ownerId=eq.${user.id}` },
+          () => {
+            fetchBookings(false);
+          }
+        )
+        .subscribe();
+    });
+
+    return () => {
+      if (activeChannel) {
+        activeChannel.unsubscribe();
       }
     };
-
-    fetchBookings();
-  }, []);
+  }, [user, fetchBookings]);
 
   if (authLoading || isLoading) {
     return (

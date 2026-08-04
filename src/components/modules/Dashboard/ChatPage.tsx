@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useAuth } from "@/providers/AuthProvider";
-import { connectSocket, disconnectSocket, getSocket } from "@/lib/socket";
+import { getSupabaseClient } from "@/lib/supabase";
+import browserClient from "@/lib/browserClient";
 import { useSearchParams } from "next/navigation";
 import {
   getMyConversations,
@@ -22,8 +23,14 @@ export default function ChatPage() {
   const [typingUser, setTypingUser] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const broadcastChannelRef = useRef<any>(null);
 
   const searchParams = useSearchParams();
+
+  const activeConversationRef = useRef<IConversation | null>(null);
+  useEffect(() => {
+    activeConversationRef.current = activeConversation;
+  }, [activeConversation]);
 
   useEffect(() => {
     if (!user) return;
@@ -39,96 +46,167 @@ export default function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, searchParams]);
 
+  // ─── Realtime Message Listener ──────────────────────────────────────────
   useEffect(() => {
     if (!user) return;
-    const socket = connectSocket(user.id);
 
-    socket.on("receive_message", (message: IMessage) => {
-      setMessages((prev) => [...prev, message]);
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === message.conversationId
-            ? { ...c, messages: [message], updatedAt: message.createdAt }
-            : c
+    let activeChannel: any;
+
+    getSupabaseClient().then((supabaseClient) => {
+      activeChannel = supabaseClient.channel("message-updates")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "Message" },
+          (payload) => {
+            const newMessage = payload.new as any;
+            const active = activeConversationRef.current;
+
+            // Format sender details
+            const senderDetails =
+              newMessage.senderId === user.id
+                ? { id: user.id, name: user.name, image: user.image }
+                : active && active.id === newMessage.conversationId
+                ? {
+                    id: active.owner.id,
+                    name: active.owner.name,
+                    image: active.owner.image,
+                  }
+                : { id: newMessage.senderId, name: "User", image: null };
+
+            const formattedMessage: IMessage = {
+              ...newMessage,
+              sender: senderDetails,
+            };
+
+            // If it belongs to our active conversation, append it
+            if (active && newMessage.conversationId === active.id) {
+              setMessages((prev) => {
+                if (prev.some((m) => m.id === formattedMessage.id)) return prev;
+                return [...prev, formattedMessage];
+              });
+            }
+
+            // Update conversation list item
+            setConversations((prev) =>
+              prev.map((c) =>
+                c.id === newMessage.conversationId
+                  ? {
+                      ...c,
+                      messages: [formattedMessage],
+                      updatedAt: newMessage.createdAt,
+                    }
+                  : c
+              )
+            );
+          }
         )
-      );
-    });
-
-    socket.on("user_typing", (data: { senderName: string }) => {
-      setTypingUser(data.senderName);
-      setIsTyping(true);
-    });
-
-    socket.on("user_stop_typing", () => {
-      setIsTyping(false);
-      setTypingUser("");
+        .subscribe();
     });
 
     return () => {
-      socket.off("receive_message");
-      socket.off("user_typing");
-      socket.off("user_stop_typing");
-      disconnectSocket();
+      if (activeChannel) {
+        activeChannel.unsubscribe();
+      }
     };
   }, [user]);
+
+  // ─── Typing Indicators Listener ──────────────────────────────────────
+  useEffect(() => {
+    if (!user || !activeConversation) return;
+
+    let channel: any;
+
+    getSupabaseClient().then((supabaseClient) => {
+      channel = supabaseClient.channel(`typing:${activeConversation.id}`, {
+        config: { broadcast: { self: false } },
+      });
+
+      channel
+        .on("broadcast", { event: "typing" }, (payload: any) => {
+          setTypingUser(payload.payload.senderName);
+          setIsTyping(true);
+        })
+        .on("broadcast", { event: "stop_typing" }, () => {
+          setIsTyping(false);
+          setTypingUser("");
+        })
+        .subscribe();
+
+      broadcastChannelRef.current = channel;
+    });
+
+    return () => {
+      if (channel) {
+        channel.unsubscribe();
+      }
+      broadcastChannelRef.current = null;
+    };
+  }, [user, activeConversation]);
 
   const handleSelectConversation = useCallback(
     async (conversation: IConversation) => {
       setActiveConversation(conversation);
-      const socket = getSocket();
-      socket.emit("join_conversation", conversation.id);
 
       const data = await getMessages(conversation.id);
       setMessages(data);
 
-      socket.emit("mark_read", {
-        conversationId: conversation.id,
-        userId: user!.id,
-      });
+      try {
+        await browserClient.post(`/chat/mark-read/${conversation.id}`);
+      } catch (err) {
+        console.error("Failed to mark read:", err);
+      }
     },
-    [user]
+    []
   );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim() || !activeConversation || !user) return;
-    const socket = getSocket();
-    const receiverId = activeConversation.ownerId;
-
-    socket.emit("send_message", {
-      conversationId: activeConversation.id,
-      senderId: user.id,
-      receiverId,
-      content: input.trim(),
-    });
-
+    const content = input.trim();
     setInput("");
-    socket.emit("stop_typing", {
-      conversationId: activeConversation.id,
-      senderId: user.id,
-    });
+
+    try {
+      await browserClient.post("/chat/messages", {
+        conversationId: activeConversation.id,
+        content,
+      });
+
+      if (broadcastChannelRef.current) {
+        broadcastChannelRef.current.send({
+          type: "broadcast",
+          event: "stop_typing",
+          payload: { senderId: user.id },
+        });
+      }
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    }
   };
 
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
     if (!activeConversation || !user) return;
-    const socket = getSocket();
 
-    socket.emit("typing", {
-      conversationId: activeConversation.id,
-      senderId: user.id,
-      senderName: user.name,
-    });
+    if (broadcastChannelRef.current) {
+      broadcastChannelRef.current.send({
+        type: "broadcast",
+        event: "typing",
+        payload: { senderName: user.name, senderId: user.id },
+      });
+    }
 
     if (typingTimeout.current) clearTimeout(typingTimeout.current);
     typingTimeout.current = setTimeout(() => {
-      socket.emit("stop_typing", {
-        conversationId: activeConversation.id,
-        senderId: user.id,
-      });
+      if (broadcastChannelRef.current) {
+        broadcastChannelRef.current.send({
+          type: "broadcast",
+          event: "stop_typing",
+          payload: { senderId: user.id },
+        });
+      }
     }, 1500);
   };
 

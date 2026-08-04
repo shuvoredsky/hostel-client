@@ -1,33 +1,65 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import browserClient from "@/lib/browserClient";
 import BookingList from "./BookingList";
+import { getSupabaseClient } from "@/lib/supabase";
 
 export default function MyBookingsPageContent() {
-  const { isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchBookings = useCallback(async (showLoading = true) => {
+    try {
+      if (showLoading) setIsLoading(true);
+      const response = await browserClient.get("/bookings/my-bookings");
+      setBookings(response?.data?.data || []);
+      setError(null);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to load bookings");
+      setBookings([]);
+    } finally {
+      if (showLoading) setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setIsLoading(true);
-        const response = await browserClient.get("/bookings/my-bookings");
-        setBookings(response?.data?.data || []);
-        setError(null);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to load bookings");
-        setBookings([]);
-      } finally {
-        setIsLoading(false);
+    fetchBookings(true);
+  }, [fetchBookings]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let activeChannel: any;
+
+    getSupabaseClient().then((supabaseClient) => {
+      activeChannel = supabaseClient.channel("bookings-realtime-changes")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "Booking", filter: `studentId=eq.${user.id}` },
+          () => {
+            fetchBookings(false);
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "Payment", filter: `studentId=eq.${user.id}` },
+          () => {
+            fetchBookings(false);
+          }
+        )
+        .subscribe();
+    });
+
+    return () => {
+      if (activeChannel) {
+        activeChannel.unsubscribe();
       }
     };
-
-    fetchBookings();
-  }, []);
+  }, [user, fetchBookings]);
 
   if (authLoading || isLoading) {
     return (
