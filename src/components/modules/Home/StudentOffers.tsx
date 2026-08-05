@@ -1,7 +1,4 @@
-"use client";
-
 import { Percent, Wallet, CalendarRange, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
 
 const offers = [
   {
@@ -41,12 +38,8 @@ export default function StudentOffers() {
       {/* Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {offers.map((offer, idx) => (
-          <motion.div
+          <div
             key={idx}
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: idx * 0.15 }}
             className="group bg-white dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800/80 p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col items-start"
           >
             <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-5 group-hover:scale-110 transition-transform">
@@ -58,7 +51,7 @@ export default function StudentOffers() {
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               {offer.desc}
             </p>
-          </motion.div>
+          </div>
         ))}
       </div>
 

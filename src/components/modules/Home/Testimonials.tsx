@@ -1,7 +1,4 @@
-"use client";
-
 import { Star, Quote, Heart } from "lucide-react";
-import { motion } from "framer-motion";
 
 const testimonials = [
   {
@@ -51,13 +48,9 @@ export default function Testimonials() {
         {/* Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {testimonials.map((t, idx) => (
-            <motion.div
+            <div
               key={idx}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.15 }}
-              className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col justify-between shadow-sm hover:shadow-lg transition-all duration-300"
+              className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 flex flex-col justify-between shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
             >
               <div>
                 {/* Header info */}
@@ -88,7 +81,7 @@ export default function Testimonials() {
                   <span className="relative z-10">{t.quote}</span>
                 </p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

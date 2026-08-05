@@ -4,6 +4,7 @@ import { MapPin, Star, BedDouble, Users, ArrowRight } from "lucide-react";
 import { getAllListings } from "@/services/listing.services";
 import { IListing } from "@/types/listing.types";
 import { formatPrice } from "@/lib/utils";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinary";
 
 const typeColors = {
   ROOM: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
@@ -29,9 +30,10 @@ function ListingCard({ listing }: { listing: IListing }) {
       <div className="relative h-48 overflow-hidden">
         {listing.images?.[0] ? (
           <Image
-            src={listing.images[0].url}
+            src={getOptimizedCloudinaryUrl(listing.images[0].url, 600)}
             alt={listing.title}
             fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
@@ -149,8 +151,41 @@ export default async function FeaturedListings() {
             className="inline-flex items-center gap-2 text-emerald-600 font-medium"
           >
             View All Listings
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 sm:ml-2" />
           </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function FeaturedListingsSkeleton() {
+  return (
+    <section className="py-20 bg-white dark:bg-slate-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between mb-10">
+          <div>
+            <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse mb-2" />
+            <div className="h-8 w-64 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-100 dark:border-slate-700 h-80 flex flex-col justify-between"
+            >
+              <div className="h-48 bg-slate-200 dark:bg-slate-800 animate-pulse w-full" />
+              <div className="p-4 flex-1 flex flex-col justify-between">
+                <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded animate-pulse w-3/4 mb-2" />
+                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse w-1/2 mb-4" />
+                <div className="flex justify-between items-center">
+                  <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded animate-pulse w-24" />
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse w-16" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

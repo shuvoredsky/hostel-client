@@ -1,7 +1,4 @@
-"use client";
-
 import { ShieldCheck, CheckCircle2, Lock, Percent } from "lucide-react";
-import { motion } from "framer-motion";
 
 const trustItems = [
   {
@@ -32,13 +29,9 @@ export default function TrustStrip() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
           {trustItems.map((item, idx) => (
-            <motion.div
+            <div
               key={idx}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: idx * 0.1 }}
-              className="flex flex-col items-center text-center space-y-2 p-3"
+              className="flex flex-col items-center text-center space-y-2 p-3 transition-transform duration-300 hover:scale-105"
             >
               <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
                 <item.icon className="w-6 h-6" />
@@ -51,7 +44,7 @@ export default function TrustStrip() {
                   {item.desc}
                 </p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
