@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import DeleteListingButton from "./DeleteListingButton";
 import CreateListingButton from "./CreateListingButton";
 import ViewListingButton from "./ViewListingButton";
+import EditListingButton from "./EditListingButton";
 
 export default function MyListingsPage() {
   const { isLoading: authLoading } = useAuth();
@@ -158,6 +159,7 @@ export default function MyListingsPage() {
 
                     <div className="flex items-center gap-2">
                       <ViewListingButton listingId={listing.id} />
+                      <EditListingButton listingId={listing.id} />
                       <DeleteListingButton listingId={listing.id} />
                     </div>
                   </div>

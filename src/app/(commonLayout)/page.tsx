@@ -6,6 +6,9 @@ import ProcessSteps from "@/components/modules/Home/ProcessSteps";
 import VerifiedStudentSection from "@/components/modules/Home/VerifiedStudentSection";
 import OwnerCTASection from "@/components/modules/Home/OwnerCTASection";
 import FAQSection from "@/components/modules/Home/FAQSection";
+import TrustStrip from "@/components/modules/Home/TrustStrip";
+import StudentOffers from "@/components/modules/Home/StudentOffers";
+import Testimonials from "@/components/modules/Home/Testimonials";
 
 
 
@@ -22,12 +25,15 @@ export default async function HomePage() {
   return (
     <main>
       <HeroBanner banners={settings?.banners || []} />
+      <TrustStrip />
       <FeaturedListings />
+      <StudentOffers />
       <HowItWorks />
       <ProcessSteps />
       <VerifiedStudentSection />
       <OwnerCTASection />
       <FAQSection />
+      <Testimonials />
     </main>
   );
 }

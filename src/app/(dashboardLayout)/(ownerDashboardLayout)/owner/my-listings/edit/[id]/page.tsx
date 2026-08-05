@@ -1,16 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
   Building,
   MapPin,
-  DollarSign,
-  FileText,
   X,
   Loader2,
   Wifi,
@@ -27,7 +24,7 @@ import {
   BedDouble,
   Users,
 } from "lucide-react";
-import { createListing } from "@/services/listing.services";
+import { getSingleListing, updateListing } from "@/services/listing.services";
 import { Switch } from "@/components/ui/switch";
 import { createListingSchema, CreateListingFormData } from "@/zod/listing.validation";
 
@@ -66,8 +63,6 @@ const GENDER_PREFERENCE_OPTIONS = [
   { value: "ANYONE", label: "Anyone" },
 ] as const;
 
-
-
 const AMENITY_OPTIONS = [
   { value: "WIFI", label: "WiFi", icon: Wifi },
   { value: "FILTERED_WATER", label: "Filtered Water", icon: Droplet },
@@ -90,18 +85,24 @@ const NEARBY_TYPE_OPTIONS = [
   { value: "BUS_STOP", label: "Bus Stop", icon: Bus, placeholder: "e.g. Mirpur 10 Bus Stop" },
 ] as const;
 
-
-export default function CreateListingPage() {
-  const [images, setImages] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export default function EditListingPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id as string;
+
+  const [isLoadingListing, setIsLoadingListing] = useState(true);
+  const [existingImages, setExistingImages] = useState<Array<{ id: string; url: string }>>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [newPreviews, setNewPreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
     handleSubmit,
     setValue,
     control,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<CreateListingFormData>({
     resolver: zodResolver(createListingSchema),
@@ -127,28 +128,73 @@ export default function CreateListingPage() {
   const selectedGasType = useWatch({ control, name: "gasType" }) as CreateListingFormData["gasType"];
   const selectedNearbyType = useWatch({ control, name: "nearbyType" }) as CreateListingFormData["nearbyType"];
 
+  useEffect(() => {
+    if (!id) return;
+    const fetchListingData = async () => {
+      try {
+        setIsLoadingListing(true);
+        const response = await getSingleListing(id);
+        const listing = response.data;
+        if (listing) {
+          setExistingImages(listing.images || []);
+          reset({
+            title: listing.title,
+            description: listing.description,
+            type: listing.type,
+            price: String(listing.price),
+            address: listing.address,
+            area: listing.area,
+            city: listing.city || "Dhaka",
+            totalRooms: String(listing.totalRooms ?? 0),
+            totalSeats: String(listing.totalSeats ?? 0),
+            studentDiscountPercent: String(listing.studentDiscountPercent ?? 0) as any,
+            advanceOption: listing.advanceOption,
+            genderPreference: listing.genderPreference,
+            allowHalfMonthlyPay: listing.allowHalfMonthlyPay || false,
+            amenities: listing.amenities || [],
+            gasType: listing.gasType || "NOT_AVAILABLE",
+            nearbyType: listing.nearbyType || undefined,
+            nearbyName: listing.nearbyName || "",
+            googleMapsLink: listing.googleMapsLink || "",
+          });
+        }
+      } catch {
+        toast.error("Failed to load listing details");
+        router.push("/owner/my-listings");
+      } finally {
+        setIsLoadingListing(false);
+      }
+    };
+    fetchListingData();
+  }, [id, reset, router]);
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (images.length + files.length > 5) {
-      toast.error("Maximum 5 images allowed");
+    if (existingImages.length + newImages.length + files.length > 5) {
+      toast.error("Maximum 5 images allowed in total");
       return;
     }
-    const newImages = [...images, ...files];
-    setImages(newImages);
-    const newPreviews = files.map((f) => URL.createObjectURL(f));
-    setPreviews((prev) => [...prev, ...newPreviews]);
+    setNewImages((prev) => [...prev, ...files]);
+    const previews = files.map((f) => URL.createObjectURL(f));
+    setNewPreviews((prev) => [...prev, ...previews]);
   };
 
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    setPreviews((prev) => {
+  const removeExistingImage = (imageId: string) => {
+    setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+    setRemovedImageIds((prev) => [...prev, imageId]);
+  };
+
+  const removeNewImage = (index: number) => {
+    setNewImages((prev) => prev.filter((_, i) => i !== index));
+    setNewPreviews((prev) => {
       URL.revokeObjectURL(prev[index]);
       return prev.filter((_, i) => i !== index);
     });
   };
 
   const onSubmit = async (data: CreateListingFormData) => {
-    if (images.length === 0) {
+    const totalImages = existingImages.length + newImages.length;
+    if (totalImages === 0) {
       toast.error("Please upload at least one image");
       return;
     }
@@ -172,29 +218,41 @@ export default function CreateListingPage() {
     if (data.nearbyType) formData.append("nearbyType", data.nearbyType);
     if (data.nearbyName) formData.append("nearbyName", data.nearbyName);
     if (data.googleMapsLink) formData.append("googleMapsLink", data.googleMapsLink);
-    images.forEach((img) => formData.append("images", img));
+
+    formData.append("removeImages", JSON.stringify(removedImageIds));
+    newImages.forEach((img) => formData.append("images", img));
 
     try {
-      await createListing(formData);
-      toast.success("Listing created! Awaiting approval.");
+      await updateListing(id, formData);
+      toast.success("Listing updated successfully!");
       router.push("/owner/my-listings");
       router.refresh();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      const message = err.response?.data?.message || "Failed to create listing";
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Failed to update listing";
       toast.error(message);
     }
   };
+
+  if (isLoadingListing) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+        <span className="ml-2 text-slate-500">Loading listing details...</span>
+      </div>
+    );
+  }
+
+  const currentTotalImages = existingImages.length + newImages.length;
 
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Create Listing
+          Edit Listing
         </h2>
         <p className="text-slate-500 dark:text-slate-400 mt-1">
-          Fill in the details to publish your property
+          Update the details of your property
         </p>
       </div>
 
@@ -245,14 +303,11 @@ export default function CreateListingPage() {
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Title
             </label>
-            <div className="relative">
-              <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                {...register("title")}
-                placeholder="e.g. Cozy Single Room in Mirpur"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-              />
-            </div>
+            <input
+              {...register("title")}
+              placeholder="e.g. Spacious Student Room near DU"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+            />
             {errors.title && (
               <p className="text-xs text-red-500">{errors.title.message}</p>
             )}
@@ -266,37 +321,30 @@ export default function CreateListingPage() {
             <textarea
               {...register("description")}
               rows={4}
-              placeholder="Describe your property in detail..."
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
+              placeholder="Describe the rooms, house rules, and amenities..."
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
             />
             {errors.description && (
-              <p className="text-xs text-red-500">
-                {errors.description.message}
-              </p>
+              <p className="text-xs text-red-500">{errors.description.message}</p>
             )}
           </div>
 
-          {/* Price */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Monthly Rent (BDT)
-            </label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          {/* Rent & Accommodation */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                Rent / month (BDT)
+              </label>
               <input
                 {...register("price")}
                 type="number"
-                placeholder="e.g. 5000"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                min={0}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
               />
+              {errors.price && (
+                <p className="text-xs text-red-500">{errors.price.message}</p>
+              )}
             </div>
-            {errors.price && (
-              <p className="text-xs text-red-500">{errors.price.message}</p>
-            )}
-          </div>
-
-          {/* Rooms & Seats */}
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Total Rooms
@@ -311,9 +359,7 @@ export default function CreateListingPage() {
                 />
               </div>
               {errors.totalRooms && (
-                <p className="text-xs text-red-500">
-                  {errors.totalRooms.message}
-                </p>
+                <p className="text-xs text-red-500">{errors.totalRooms.message}</p>
               )}
             </div>
             <div className="space-y-1.5">
@@ -330,9 +376,7 @@ export default function CreateListingPage() {
                 />
               </div>
               {errors.totalSeats && (
-                <p className="text-xs text-red-500">
-                  {errors.totalSeats.message}
-                </p>
+                <p className="text-xs text-red-500">{errors.totalSeats.message}</p>
               )}
             </div>
           </div>
@@ -392,7 +436,6 @@ export default function CreateListingPage() {
               <input
                 {...register("city")}
                 placeholder="e.g. Dhaka"
-                defaultValue="Dhaka"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
               />
               {errors.city && (
@@ -414,9 +457,6 @@ export default function CreateListingPage() {
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
               />
             </div>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
-              Open Google Maps, find your property, tap Share, and copy the link here.
-            </p>
             {errors.googleMapsLink && (
               <p className="text-xs text-red-500 mt-1">{errors.googleMapsLink.message}</p>
             )}
@@ -425,15 +465,13 @@ export default function CreateListingPage() {
 
         {/* Student Exclusive Offers */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
-                Student Exclusive Offers
-              </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Add discount and payment preferences for student bookings.
-              </p>
-            </div>
+          <div>
+            <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
+              Student Exclusive Offers
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Update discount and payment preferences for student bookings.
+            </p>
           </div>
 
           <div className="space-y-4">
@@ -521,8 +559,7 @@ export default function CreateListingPage() {
           </div>
         </div>
 
-
-                {/* Amenities & Nearby */}
+        {/* Amenities & Nearby */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
           <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
             Amenities & Nearby
@@ -629,34 +666,52 @@ export default function CreateListingPage() {
           </div>
         </div>
 
-
-        {/* Images */}
+        {/* Photos */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-slate-900 dark:text-white text-sm">
               Photos
             </h3>
             <span className="text-xs text-slate-400">
-              {images.length}/5 uploaded
+              {currentTotalImages}/5 uploaded
             </span>
           </div>
 
-          {/* Previews */}
-          {previews.length > 0 && (
+          {/* Existing Previews */}
+          {(existingImages.length > 0 || newPreviews.length > 0) && (
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-              {previews.map((src, i) => (
+              {existingImages.map((img) => (
                 <div
-                  key={i}
+                  key={img.id}
                   className="relative aspect-square rounded-xl overflow-hidden group"
                 >
                   <img
-                    src={src}
-                    alt={`Preview ${i + 1}`}
+                    src={img.url}
+                    alt="Listing Image"
                     className="w-full h-full object-cover"
                   />
                   <button
                     type="button"
-                    onClick={() => removeImage(i)}
+                    onClick={() => removeExistingImage(img.id)}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {newPreviews.map((src, i) => (
+                <div
+                  key={i}
+                  className="relative aspect-square rounded-xl overflow-hidden group border border-dashed border-emerald-500"
+                >
+                  <img
+                    src={src}
+                    alt={`New Preview ${i + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeNewImage(i)}
                     className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <X className="w-3 h-3" />
@@ -667,14 +722,14 @@ export default function CreateListingPage() {
           )}
 
           {/* Upload Button */}
-          {images.length < 5 && (
+          {currentTotalImages < 5 && (
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               className="w-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl py-8 flex flex-col items-center gap-2 text-slate-400 hover:border-emerald-400 hover:text-emerald-500 transition-colors"
             >
               <Upload className="w-6 h-6" />
-              <span className="text-sm">Click to upload images</span>
+              <span className="text-sm">Click to upload new images</span>
               <span className="text-xs">PNG, JPG up to 5MB each</span>
             </button>
           )}
@@ -698,12 +753,12 @@ export default function CreateListingPage() {
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Creating...
+              Updating...
             </>
           ) : (
             <>
               <Building className="w-4 h-4" />
-              Create Listing
+              Update Listing
             </>
           )}
         </button>
