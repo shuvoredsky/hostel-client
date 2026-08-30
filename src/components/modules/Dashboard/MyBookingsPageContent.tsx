@@ -33,9 +33,14 @@ export default function MyBookingsPageContent() {
   useEffect(() => {
     if (!user) return;
 
+    let isCancelled = false;
     let activeChannel: any;
+    let client: any;
 
     getSupabaseClient().then((supabaseClient) => {
+      if (isCancelled) return;
+      client = supabaseClient;
+
       activeChannel = supabaseClient.channel("bookings-realtime-changes")
         .on(
           "postgres_changes",
@@ -50,13 +55,15 @@ export default function MyBookingsPageContent() {
           () => {
             fetchBookings(false);
           }
-        )
-        .subscribe();
+        );
+
+      activeChannel.subscribe();
     });
 
     return () => {
-      if (activeChannel) {
-        activeChannel.unsubscribe();
+      isCancelled = true;
+      if (activeChannel && client) {
+        client.removeChannel(activeChannel);
       }
     };
   }, [user, fetchBookings]);

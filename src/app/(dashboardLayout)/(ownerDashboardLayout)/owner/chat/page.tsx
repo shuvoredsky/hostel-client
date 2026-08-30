@@ -42,9 +42,14 @@ export default function OwnerChatPage() {
   useEffect(() => {
     if (!user) return;
 
+    let isCancelled = false;
     let activeChannel: any;
+    let client: any;
 
     getSupabaseClient().then((supabaseClient) => {
+      if (isCancelled) return;
+      client = supabaseClient;
+
       activeChannel = supabaseClient.channel("message-updates")
         .on(
           "postgres_changes",
@@ -91,13 +96,15 @@ export default function OwnerChatPage() {
               )
             );
           }
-        )
-        .subscribe();
+        );
+
+      activeChannel.subscribe();
     });
 
     return () => {
-      if (activeChannel) {
-        activeChannel.unsubscribe();
+      isCancelled = true;
+      if (activeChannel && client) {
+        client.removeChannel(activeChannel);
       }
     };
   }, [user]);
