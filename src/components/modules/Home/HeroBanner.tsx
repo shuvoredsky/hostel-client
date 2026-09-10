@@ -74,13 +74,26 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
               transition={{ duration: 1 }}
               className="absolute inset-0"
             >
-              <Image
-                src={activeBanners[currentIndex].imageUrl}
-  alt={activeBanners[currentIndex].title || "Banner"}
-                fill
-                className="object-cover"
-                priority
-              />
+              {activeBanners[currentIndex]?.mediaType === "VIDEO" && activeBanners[currentIndex]?.videoUrl ? (
+                <video
+                  src={activeBanners[currentIndex].videoUrl!}
+                  poster={activeBanners[currentIndex].imageUrl}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={activeBanners[currentIndex].imageUrl}
+                  alt={activeBanners[currentIndex].title || "Banner"}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              )}
               <div className="absolute inset-0 bg-slate-900/70" />
             </motion.div>
           </AnimatePresence>

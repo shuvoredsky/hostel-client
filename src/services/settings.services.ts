@@ -8,10 +8,14 @@ if (!API_BASE_URL) {
   throw new Error("API_BASE_URL is not defined in environment variables");
 }
 
+export type BannerMediaType = 'IMAGE' | 'VIDEO';
+
 export interface IBanner {
   id: string;
   title?: string;
-  imageUrl: string;  // ← backend এর actual field name
+  imageUrl: string;
+  videoUrl?: string | null;
+  mediaType?: BannerMediaType;
   order: number;
   isActive: boolean;
   createdAt: string;
@@ -34,6 +38,9 @@ export interface IUpdateBannerInput {
   title?: string;
   order?: number;
   isActive?: boolean;
+  mediaType?: BannerMediaType;
+  imageUrl?: string;
+  videoUrl?: string | null;
 }
 
 // ─── Public ───────────────────────────────────────────────────────────────────
@@ -87,6 +94,22 @@ export const addBanner = async (formData: FormData) => {
     return response;
   } catch (error) {
     console.error("Error adding banner:", error);
+    throw error;
+  }
+};
+
+export const addVideoBanner = async (formData: FormData) => {
+  try {
+    const response = await httpClient.post<IBanner>(
+      "/settings/banner/video",
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error("Error adding video banner:", error);
     throw error;
   }
 };

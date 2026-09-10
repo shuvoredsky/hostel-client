@@ -14,6 +14,8 @@ import {
     Loader2,
     Plus,
     Settings,
+    Video,
+    Film,
 } from "lucide-react";
 
 
@@ -21,6 +23,8 @@ interface IBanner {
     id: string;
     title?: string;
     imageUrl: string;
+    videoUrl?: string | null;
+    mediaType?: "IMAGE" | "VIDEO";
     order: number;
     isActive: boolean;
     createdAt: string;
@@ -304,11 +308,15 @@ function BannerSection({
 // ─── Add Banner Form ──────────────────────────────────────────────────────────
 
 function AddBannerForm({ onAdd }: { onAdd: () => void }) {
+    const [mediaType, setMediaType] = useState<"IMAGE" | "VIDEO">("IMAGE");
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
+    const [videoFile, setVideoFile] = useState<File | null>(null);
+    const [videoPreview, setVideoPreview] = useState<string | null>(null);
     const [title, setTitle] = useState("");
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const videoInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0];
@@ -317,114 +325,295 @@ function AddBannerForm({ onAdd }: { onAdd: () => void }) {
         setPreview(URL.createObjectURL(f));
     };
 
-    const handleSubmit = async () => {
-        if (!file) {
-            toast.error("Please select a banner image");
-            return;
-        }
-        const formData = new FormData();
-        formData.append("banner", file);
-        if (title) formData.append("title", title);
+    const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        setVideoFile(f);
+        setVideoPreview(URL.createObjectURL(f));
+    };
 
-        try {
-            setIsUploading(true);
-            await browserClient.post("/settings/banner", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
-            toast.success("Banner added successfully");
-            setFile(null);
-            setPreview(null);
-            setTitle("");
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            onAdd();
-        } catch (err: unknown) {
-            toast.error(getErrorMessage(err, "Failed to update title"));
-        } finally {
-            setIsUploading(false);
+    const handleSubmit = async () => {
+        if (mediaType === "IMAGE") {
+            if (!file) {
+                toast.error("Please select a banner image");
+                return;
+            }
+            const formData = new FormData();
+            formData.append("banner", file);
+            if (title) formData.append("title", title);
+
+            try {
+                setIsUploading(true);
+                await browserClient.post("/settings/banner", formData, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
+                toast.success("Image banner added successfully");
+                handleReset();
+                onAdd();
+            } catch (err: unknown) {
+                toast.error(getErrorMessage(err, "Failed to add banner"));
+            } finally {
+                setIsUploading(false);
+            }
+        } else {
+            if (!videoFile) {
+                toast.error("Please select a video file (MP4, WebM)");
+                return;
+            }
+            if (!file) {
+                toast.error("Please upload a poster/thumbnail image for the video banner");
+                return;
+            }
+            const formData = new FormData();
+            formData.append("video", videoFile);
+            formData.append("banner", file);
+            if (title) formData.append("title", title);
+
+            try {
+                setIsUploading(true);
+                await browserClient.post("/settings/banner/video", formData, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
+                toast.success("Video banner added successfully");
+                handleReset();
+                onAdd();
+            } catch (err: unknown) {
+                toast.error(getErrorMessage(err, "Failed to add video banner"));
+            } finally {
+                setIsUploading(false);
+            }
         }
     };
 
-    const handleCancel = () => {
+    const handleReset = () => {
         setFile(null);
         setPreview(null);
+        setVideoFile(null);
+        setVideoPreview(null);
         setTitle("");
         if (fileInputRef.current) fileInputRef.current.value = "";
+        if (videoInputRef.current) videoInputRef.current.value = "";
     };
 
-    return (
-        <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-4">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                <Plus className="w-4 h-4 text-emerald-500" />
-                Add New Banner
-            </p>
+    const canSubmit = mediaType === "IMAGE" ? !!file : (!!videoFile && !!file);
 
-            {/* Image Upload */}
-            {!preview ? (
-                <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl py-8 flex flex-col items-center gap-2 text-slate-400 hover:border-emerald-400 hover:text-emerald-500 transition-colors"
-                >
-                    <Upload className="w-5 h-5" />
-                    <span className="text-sm font-medium">Click to select banner image</span>
-                    <span className="text-xs">Recommended: 1200×400px or wider</span>
-                </button>
-            ) : (
-                <div className="relative w-full h-40 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
-                    <img
-                        src={preview}
-                        alt="Banner preview"
-                        className="w-full h-full object-cover"
-                    />
+    return (
+        <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-5 bg-slate-50/50 dark:bg-slate-900/40">
+            <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                    <Plus className="w-4 h-4 text-emerald-500" />
+                    Add New Banner
+                </p>
+
+                {/* Media Type Toggle */}
+                <div className="inline-flex rounded-lg bg-slate-200/80 dark:bg-slate-800 p-1">
                     <button
-                        onClick={handleCancel}
-                        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                        type="button"
+                        onClick={() => { setMediaType("IMAGE"); handleReset(); }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                            mediaType === "IMAGE"
+                                ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                        }`}
                     >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <ImageIcon className="w-3.5 h-3.5" />
+                        Image Banner
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => { setMediaType("VIDEO"); handleReset(); }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                            mediaType === "VIDEO"
+                                ? "bg-white dark:bg-slate-700 text-purple-600 dark:text-purple-400 shadow-sm"
+                                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                    >
+                        <Video className="w-3.5 h-3.5" />
+                        Video Banner
+                    </button>
+                </div>
+            </div>
+
+            {/* IMAGE BANNER FORM */}
+            {mediaType === "IMAGE" && (
+                <div>
+                    {!preview ? (
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl py-8 flex flex-col items-center gap-2 text-slate-400 hover:border-emerald-400 hover:text-emerald-500 transition-colors bg-white dark:bg-slate-800"
+                        >
+                            <Upload className="w-5 h-5" />
+                            <span className="text-sm font-medium">Click to select banner image</span>
+                            <span className="text-xs text-slate-400">Recommended: 1920×600px (JPG, PNG, WebP)</span>
+                        </button>
+                    ) : (
+                        <div className="relative w-full h-44 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
+                            <img
+                                src={preview}
+                                alt="Banner preview"
+                                className="w-full h-full object-cover"
+                            />
+                            <button
+                                onClick={handleReset}
+                                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    )}
+
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                    />
                 </div>
             )}
 
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-            />
+            {/* VIDEO BANNER FORM */}
+            {mediaType === "VIDEO" && (
+                <div className="space-y-4">
+                    {/* Live Video Preview if uploaded */}
+                    {videoPreview && (
+                        <div className="relative rounded-xl overflow-hidden border border-purple-200 dark:border-purple-900 bg-black">
+                            <video
+                                src={videoPreview}
+                                poster={preview || undefined}
+                                controls
+                                muted
+                                playsInline
+                                className="w-full h-48 object-cover"
+                            />
+                            <button
+                                onClick={handleReset}
+                                className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                            <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                                <Film className="w-3 h-3 text-purple-400" />
+                                <span>Live Video Preview</span>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* 1. Video File Input */}
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                                <Video className="w-3.5 h-3.5 text-purple-500" />
+                                1. Video File (MP4, WebM max 30MB)
+                            </label>
+                            {!videoPreview ? (
+                                <button
+                                    type="button"
+                                    onClick={() => videoInputRef.current?.click()}
+                                    className="w-full border-2 border-dashed border-purple-200 dark:border-purple-900/60 rounded-xl py-6 flex flex-col items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:border-purple-500 hover:text-purple-600 transition-colors bg-purple-50/30 dark:bg-purple-950/20"
+                                >
+                                    <Upload className="w-4 h-4 text-purple-500" />
+                                    <span className="text-xs font-medium">Select Video File</span>
+                                    <span className="text-[10px] text-slate-400">MP4, WebM up to 30MB</span>
+                                </button>
+                            ) : (
+                                <div className="flex items-center justify-between p-3 rounded-xl border border-purple-200 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-950/30">
+                                    <span className="text-xs text-purple-700 dark:text-purple-300 truncate max-w-[180px] font-medium">
+                                        ✓ {videoFile?.name}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => videoInputRef.current?.click()}
+                                        className="text-xs text-purple-600 hover:underline font-medium"
+                                    >
+                                        Change
+                                    </button>
+                                </div>
+                            )}
+                            <input
+                                ref={videoInputRef}
+                                type="file"
+                                accept="video/mp4,video/webm,video/*"
+                                onChange={handleVideoChange}
+                                className="hidden"
+                            />
+                        </div>
+
+                        {/* 2. Poster Image Input */}
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                                <ImageIcon className="w-3.5 h-3.5 text-emerald-500" />
+                                2. Fallback / Poster Frame (Required)
+                            </label>
+                            {!preview ? (
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="w-full border-2 border-dashed border-emerald-200 dark:border-emerald-900/60 rounded-xl py-6 flex flex-col items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:border-emerald-500 hover:text-emerald-600 transition-colors bg-emerald-50/30 dark:bg-emerald-950/20"
+                                >
+                                    <Upload className="w-4 h-4 text-emerald-500" />
+                                    <span className="text-xs font-medium">Select Poster Image</span>
+                                    <span className="text-[10px] text-slate-400">JPG, PNG, WebP frame</span>
+                                </button>
+                            ) : (
+                                <div className="flex items-center justify-between p-3 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/30">
+                                    <span className="text-xs text-emerald-700 dark:text-emerald-300 truncate max-w-[180px] font-medium">
+                                        ✓ {file?.name}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="text-xs text-emerald-600 hover:underline font-medium"
+                                    >
+                                        Change
+                                    </button>
+                                </div>
+                            )}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="hidden"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Title Input */}
             <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Banner title (optional)"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                placeholder="Banner title / headline (optional)"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
             />
 
-            {/* Submit */}
-            {file && (
-                <div className="flex items-center gap-2">
+            {/* Submit Controls */}
+            {canSubmit && (
+                <div className="flex items-center gap-2 pt-2">
                     <button
                         onClick={handleSubmit}
                         disabled={isUploading}
-                        className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
+                        className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium py-2.5 rounded-xl transition-colors shadow-sm"
                     >
                         {isUploading ? (
                             <>
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                Uploading...
+                                Uploading {mediaType === "VIDEO" ? "Video & Poster" : "Banner"}...
                             </>
                         ) : (
                             <>
                                 <Plus className="w-4 h-4" />
-                                Add Banner
+                                Add {mediaType === "VIDEO" ? "Video Banner" : "Image Banner"}
                             </>
                         )}
                     </button>
                     <button
-                        onClick={handleCancel}
-                        className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                        onClick={handleReset}
+                        className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
                         Cancel
                     </button>
@@ -500,13 +689,19 @@ function BannerRow({
                 }`}
         >
             <div className="flex flex-col sm:flex-row gap-4 p-4">
-                {/* Image */}
+                {/* Image / Video Thumbnail */}
                 <div className="relative w-full sm:w-40 h-24 rounded-lg overflow-hidden shrink-0 bg-slate-100 dark:bg-slate-700">
                     <img
                         src={banner.imageUrl}
                         alt={banner.title || "Banner"}
                         className="w-full h-full object-cover"
                     />
+                    {banner.mediaType === "VIDEO" && (
+                        <div className="absolute top-1.5 left-1.5 bg-purple-600/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow backdrop-blur-sm">
+                            <Video className="w-3 h-3" />
+                            Video
+                        </div>
+                    )}
                     {!banner.isActive && (
                         <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
                             <span className="text-xs text-white font-medium bg-slate-800/80 px-2 py-0.5 rounded-full">
