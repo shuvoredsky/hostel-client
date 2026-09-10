@@ -6,6 +6,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import DashboardSidebar from "@/components/modules/Dashboard/DashboardSidebar";
 import DashboardNavbar from "@/components/modules/Dashboard/DashboardNavbar";
 import browserClient from "@/lib/browserClient";
+import LogoLoader from "@/components/shared/LogoLoader";
 
 export default function DashboardLayout({
   children,
@@ -37,11 +38,7 @@ export default function DashboardLayout({
   }, [user, isLoading, router]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-current"></div>
-      </div>
-    );
+    return <LogoLoader fullScreen={true} size="md" />;
   }
 
   if (!user) return null;

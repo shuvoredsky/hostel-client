@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
+import LogoLoader from "@/components/shared/LogoLoader";
 
 export default function CommonProtectedLayout({
   children,
@@ -20,11 +21,7 @@ export default function CommonProtectedLayout({
   }, [user, isLoading, router]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-current"></div>
-      </div>
-    );
+    return <LogoLoader fullScreen={true} size="md" />;
   }
 
   if (!user) return null;
