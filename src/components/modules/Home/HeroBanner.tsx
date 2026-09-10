@@ -17,6 +17,7 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { IBanner } from "@/services/settings.services";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinary";
 
 const stats = [
   { icon: Home, label: "Listings", value: "500+" },
@@ -87,7 +88,7 @@ export default function HeroBanner({ banners }: HeroBannerProps) {
                 />
               ) : (
                 <Image
-                  src={activeBanners[currentIndex].imageUrl}
+                  src={getOptimizedCloudinaryUrl(activeBanners[currentIndex].imageUrl, 1920)}
                   alt={activeBanners[currentIndex].title || "Banner"}
                   fill
                   className="object-cover"

@@ -10,6 +10,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useState } from "react";
 import { toast } from "sonner";
 import ListingOfferBadges from "@/components/modules/Listings/ListingOfferBadges";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinary";
 
 const typeColors = {
   ROOM: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
@@ -86,7 +87,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
       <div className="relative h-48 overflow-hidden">
         {firstImage ? (
           <Image
-            src={firstImage}
+            src={getOptimizedCloudinaryUrl(firstImage, 600)}
             alt={listing.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"

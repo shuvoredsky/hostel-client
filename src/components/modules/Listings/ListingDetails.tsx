@@ -28,6 +28,7 @@ import { createBooking } from "@/services/booking.services";
 import ReviewSection from "./ReviewSection";
 import ListingOfferBadges from "./ListingOfferBadges";
 import ListingAmenities from "./ListingAmenities";
+import { getOptimizedCloudinaryUrl } from "@/lib/cloudinary";
 
 interface ListingDetailsProps {
   listing: IListing;
@@ -224,7 +225,7 @@ const handleMessageOwner = async () => {
               <div className="relative h-80 sm:h-96">
                 {images.length > 0 ? (
                   <Image
-                    src={images[currentImage]?.url}
+                    src={getOptimizedCloudinaryUrl(images[currentImage]?.url, 1200)}
                     alt={listing.title}
                     fill
                     className="object-cover"
@@ -271,7 +272,7 @@ const handleMessageOwner = async () => {
                       }`}
                     >
                       <Image
-                        src={img.url}
+                        src={getOptimizedCloudinaryUrl(img.url, 200)}
                         alt={`Image ${index + 1}`}
                         fill
                         className="object-cover"

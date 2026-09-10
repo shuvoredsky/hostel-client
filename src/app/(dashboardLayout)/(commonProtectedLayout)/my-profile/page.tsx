@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/providers/AuthProvider";
+import Image from "next/image";
 import { formatDate, getStatusColor } from "@/lib/utils";
 import {
   User,
@@ -73,9 +74,11 @@ export default function MyProfilePage() {
             <div className="relative">
               <div className="w-20 h-20 rounded-2xl border-4 border-white dark:border-slate-800 overflow-hidden bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shadow-md">
                 {user.image ? (
-                  <img
+                  <Image
                     src={user.image}
                     alt={user.name}
+                    width={80}
+                    height={80}
                     className="w-full h-full object-cover"
                   />
                 ) : (

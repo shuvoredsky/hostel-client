@@ -91,10 +91,12 @@ export default function Navbar({ logo }: NavbarProps) {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             {logo ? (
-              <img
+              <Image
                 src={logo}
                 alt="DhakaStay Logo"
-                className="h-9 w-9 w-auto object-contain"
+                width={36}
+                height={36}
+                className="h-9 w-auto object-contain"
               />
             ) : (
               <>

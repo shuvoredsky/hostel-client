@@ -124,7 +124,13 @@ export default function DashboardSidebar({ user, logo }: DashboardSidebarProps) 
         {!collapsed && (
           <Link href="/" className="flex items-center gap-2">
             {logo ? (
-              <img src={logo} alt="Logo" className="h-7 w-auto object-contain" />
+              <Image
+                src={logo}
+                alt="Logo"
+                width={28}
+                height={28}
+                className="h-7 w-auto object-contain"
+              />
             ) : (
               <>
                 <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center shrink-0">
