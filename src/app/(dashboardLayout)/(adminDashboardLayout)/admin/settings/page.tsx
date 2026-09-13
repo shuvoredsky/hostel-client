@@ -55,13 +55,17 @@ export default function AdminSettingsPage() {
         const fetchSettings = async () => {
             try {
                 setIsLoading(true);
-                const response = await browserClient.get("/settings");
-                const data = response?.data?.data;
-                setSettings(data?.settings || null);
-                setBanners(data?.banners || []);
+                const [settingsRes, bannersRes] = await Promise.all([
+                    browserClient.get("/settings"),
+                    browserClient.get("/settings/admin/banners"),
+                ]);
+                const settingsData = settingsRes?.data?.data;
+                const adminBanners = bannersRes?.data?.data || [];
+                setSettings(settingsData?.settings || null);
+                setBanners(adminBanners);
                 setError(null);
             } catch (err: unknown) {
-                toast.error(getErrorMessage(err, "Failed to update title"));
+                toast.error(getErrorMessage(err, "Failed to load settings"));
             } finally {
                 setIsLoading(false);
             }
@@ -71,10 +75,14 @@ export default function AdminSettingsPage() {
 
     const refetch = async () => {
         try {
-            const response = await browserClient.get("/settings");
-            const data = response?.data?.data;
-            setSettings(data?.settings || null);
-            setBanners(data?.banners || []);
+            const [settingsRes, bannersRes] = await Promise.all([
+                browserClient.get("/settings"),
+                browserClient.get("/settings/admin/banners"),
+            ]);
+            const settingsData = settingsRes?.data?.data;
+            const adminBanners = bannersRes?.data?.data || [];
+            setSettings(settingsData?.settings || null);
+            setBanners(adminBanners);
         } catch { }
     };
 
@@ -147,15 +155,19 @@ function LogoSection({
         formData.append("logo", file);
         try {
             setIsUploading(true);
-            await browserClient.patch("/settings/logo", formData, {
+            const response = await browserClient.patch("/settings/logo", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
+            const updatedLogo = response?.data?.data?.logoUrl;
+            if (updatedLogo && typeof window !== "undefined") {
+                localStorage.setItem("dhakastay_logo_url", updatedLogo);
+            }
             toast.success("Logo updated successfully");
             setFile(null);
             setPreview(null);
             onUpdate();
         } catch (err: unknown) {
-            toast.error(getErrorMessage(err, "Failed to update title"));
+            toast.error(getErrorMessage(err, "Failed to update logo"));
         } finally {
             setIsUploading(false);
         }
@@ -360,13 +372,9 @@ function AddBannerForm({ onAdd }: { onAdd: () => void }) {
                 toast.error("Please select a video file (MP4, WebM)");
                 return;
             }
-            if (!file) {
-                toast.error("Please upload a poster/thumbnail image for the video banner");
-                return;
-            }
             const formData = new FormData();
             formData.append("video", videoFile);
-            formData.append("banner", file);
+            if (file) formData.append("banner", file);
             if (title) formData.append("title", title);
 
             try {
@@ -395,7 +403,7 @@ function AddBannerForm({ onAdd }: { onAdd: () => void }) {
         if (videoInputRef.current) videoInputRef.current.value = "";
     };
 
-    const canSubmit = mediaType === "IMAGE" ? !!file : (!!videoFile && !!file);
+    const canSubmit = mediaType === "IMAGE" ? !!file : !!videoFile;
 
     return (
         <div className="border border-slate-200 dark:border-slate-700 rounded-xl p-5 space-y-5 bg-slate-50/50 dark:bg-slate-900/40">
@@ -544,7 +552,7 @@ function AddBannerForm({ onAdd }: { onAdd: () => void }) {
                         <div>
                             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                                 <ImageIcon className="w-3.5 h-3.5 text-emerald-500" />
-                                2. Fallback / Poster Frame (Required)
+                                2. Fallback / Poster Frame (Optional)
                             </label>
                             {!preview ? (
                                 <button
@@ -554,7 +562,7 @@ function AddBannerForm({ onAdd }: { onAdd: () => void }) {
                                 >
                                     <Upload className="w-4 h-4 text-emerald-500" />
                                     <span className="text-xs font-medium">Select Poster Image</span>
-                                    <span className="text-[10px] text-slate-400">JPG, PNG, WebP frame</span>
+                                    <span className="text-[10px] text-slate-400">Auto-generated from video if omitted</span>
                                 </button>
                             ) : (
                                 <div className="flex items-center justify-between p-3 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/30">
@@ -591,34 +599,34 @@ function AddBannerForm({ onAdd }: { onAdd: () => void }) {
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
             />
 
-            {/* Submit Controls */}
-            {canSubmit && (
-                <div className="flex items-center gap-2 pt-2">
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isUploading}
-                        className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-sm font-medium py-2.5 rounded-xl transition-colors shadow-sm"
-                    >
-                        {isUploading ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Uploading {mediaType === "VIDEO" ? "Video & Poster" : "Banner"}...
-                            </>
-                        ) : (
-                            <>
-                                <Plus className="w-4 h-4" />
-                                Add {mediaType === "VIDEO" ? "Video Banner" : "Image Banner"}
-                            </>
-                        )}
-                    </button>
+            {/* Submit Controls — always visible with active/disabled state */}
+            <div className="flex items-center gap-2 pt-2">
+                <button
+                    onClick={handleSubmit}
+                    disabled={!canSubmit || isUploading}
+                    className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium py-2.5 rounded-xl transition-colors shadow-sm"
+                >
+                    {isUploading ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Uploading {mediaType === "VIDEO" ? "Video Banner" : "Image Banner"}...
+                        </>
+                    ) : (
+                        <>
+                            <Plus className="w-4 h-4" />
+                            Add {mediaType === "VIDEO" ? "Video Banner" : "Image Banner"}
+                        </>
+                    )}
+                </button>
+                {(file || videoFile || title) && (
                     <button
                         onClick={handleReset}
                         className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     >
                         Cancel
                     </button>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 }
@@ -646,7 +654,7 @@ function BannerRow({
             toast.success("Banner deleted");
             onUpdate();
         } catch (err: unknown) {
-            toast.error(getErrorMessage(err, "Failed to update title"));
+            toast.error(getErrorMessage(err, "Failed to delete banner"));
         } finally {
             setIsDeleting(false);
         }
@@ -661,7 +669,7 @@ function BannerRow({
             toast.success(banner.isActive ? "Banner hidden" : "Banner shown");
             onUpdate();
         } catch (err: unknown) {
-            toast.error(getErrorMessage(err, "Failed to update title"));
+            toast.error(getErrorMessage(err, "Failed to toggle banner status"));
         } finally {
             setIsToggling(false);
         }

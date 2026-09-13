@@ -4,6 +4,7 @@ import "./globals.css";
 import QueryProvider from "@/providers/QueryProvider";
 import ThemeProvider from "@/providers/ThemeProvider";
 import AuthProvider from "@/providers/AuthProvider";
+import SettingsProvider from "@/providers/SettingsProvider";
 import { Toaster } from "@/components/ui/sonner";
 
 const geist = Geist({
@@ -27,8 +28,10 @@ export default function RootLayout({
         <ThemeProvider>
           <QueryProvider>
             <AuthProvider>
-              {children}
-              <Toaster richColors position="top-right" />
+              <SettingsProvider>
+                {children}
+                <Toaster richColors position="top-right" />
+              </SettingsProvider>
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

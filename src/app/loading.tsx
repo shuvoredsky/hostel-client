@@ -1,5 +1,5 @@
-import LogoLoader from "@/components/shared/LogoLoader";
+import LogoLoaderClient from "@/components/shared/LogoLoaderClient";
 
 export default function RootLoading() {
-  return <LogoLoader fullScreen={true} size="lg" />;
+  return <LogoLoaderClient fullScreen={true} size="lg" />;
 }

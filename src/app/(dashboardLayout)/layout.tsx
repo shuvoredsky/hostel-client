@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
+import { useSettings } from "@/providers/SettingsProvider";
 import DashboardSidebar from "@/components/modules/Dashboard/DashboardSidebar";
 import DashboardNavbar from "@/components/modules/Dashboard/DashboardNavbar";
-import browserClient from "@/lib/browserClient";
-import LogoLoader from "@/components/shared/LogoLoader";
+import LogoLoaderClient from "@/components/shared/LogoLoaderClient";
 
 export default function DashboardLayout({
   children,
@@ -15,20 +15,8 @@ export default function DashboardLayout({
 }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
-  const [logo, setLogo] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchLogo = async () => {
-      try {
-        const response = await browserClient.get("/settings");
-        const logoUrl = response?.data?.data?.settings?.logoUrl || null;
-        setLogo(logoUrl);
-      } catch {
-        setLogo(null);
-      }
-    };
-    fetchLogo();
-  }, []);
+  const settings = useSettings();
+  const logo = settings?.logoUrl || null;
 
   useEffect(() => {
     if (isLoading) return;
@@ -38,7 +26,7 @@ export default function DashboardLayout({
   }, [user, isLoading, router]);
 
   if (isLoading) {
-    return <LogoLoader fullScreen={true} size="md" />;
+    return <LogoLoaderClient fullScreen={true} size="md" />;
   }
 
   if (!user) return null;

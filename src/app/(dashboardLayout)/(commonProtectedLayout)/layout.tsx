@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
-import LogoLoader from "@/components/shared/LogoLoader";
+import LogoLoaderClient from "@/components/shared/LogoLoaderClient";
 
 export default function CommonProtectedLayout({
   children,
@@ -21,7 +21,7 @@ export default function CommonProtectedLayout({
   }, [user, isLoading, router]);
 
   if (isLoading) {
-    return <LogoLoader fullScreen={true} size="md" />;
+    return <LogoLoaderClient fullScreen={true} size="md" />;
   }
 
   if (!user) return null;

@@ -114,6 +114,16 @@ export const addVideoBanner = async (formData: FormData) => {
   }
 };
 
+export const getAllBannersForAdmin = async () => {
+  try {
+    const response = await httpClient.get<IBanner[]>("/settings/admin/banners");
+    return response;
+  } catch (error) {
+    console.error("Error fetching admin banners:", error);
+    throw error;
+  }
+};
+
 export const updateBanner = async (
   id: string,
   payload: IUpdateBannerInput
