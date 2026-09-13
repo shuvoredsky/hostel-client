@@ -24,17 +24,19 @@ export default function SettingsProvider({
 }: {
   children: React.ReactNode;
 }) {
-  // Synchronously initialize from localStorage if available
-  const [logoUrl, setLogoUrlState] = useState<string | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return localStorage.getItem(LOGO_CACHE_KEY);
-      } catch {
-        return null;
+  const [logoUrl, setLogoUrlState] = useState<string | null>(null);
+
+  // Load from localStorage in useEffect after hydration
+  useEffect(() => {
+    try {
+      const cached = localStorage.getItem(LOGO_CACHE_KEY);
+      if (cached) {
+        setLogoUrlState(cached);
       }
+    } catch {
+      // ignore
     }
-    return null;
-  });
+  }, []);
 
   const setLogoUrl = useCallback((url: string | null) => {
     setLogoUrlState(url);

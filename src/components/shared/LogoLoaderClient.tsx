@@ -19,24 +19,19 @@ export default function LogoLoaderClient({
   text,
   className,
 }: LogoLoaderClientProps) {
+  const [mounted, setMounted] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const settings = useSettings();
-  const [cachedLogo, setCachedLogo] = useState<string | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return localStorage.getItem("dhakastay_logo_url");
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
 
   useEffect(() => {
-    if (!settings?.logoUrl && typeof window !== "undefined") {
+    setMounted(true);
+    if (settings?.logoUrl) {
+      setLogoUrl(settings.logoUrl);
+    } else {
       try {
         const cached = localStorage.getItem("dhakastay_logo_url");
         if (cached) {
-          setCachedLogo(cached);
+          setLogoUrl(cached);
         }
       } catch {
         // ignore
@@ -44,7 +39,7 @@ export default function LogoLoaderClient({
     }
   }, [settings?.logoUrl]);
 
-  const logoUrl = settings?.logoUrl || cachedLogo;
+  const showDynamicLogo = mounted && Boolean(logoUrl);
 
   const iconSizeClasses = {
     sm: "w-10 h-10 rounded-xl",
@@ -88,7 +83,7 @@ export default function LogoLoaderClient({
           />
 
           {/* Logo Badge */}
-          {logoUrl ? (
+          {showDynamicLogo && logoUrl ? (
             <div
               className={cn(
                 "relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center shadow-lg shadow-emerald-600/10 ring-4 ring-emerald-500/20 transition-all duration-300 animate-pulse overflow-hidden p-2.5",

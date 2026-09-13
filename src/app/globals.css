@@ -128,3 +128,13 @@
     @apply font-sans;
   }
 }
+
+/* Listing card image hover zoom */
+.listing-card-image {
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1) !important;
+  will-change: transform;
+}
+
+.group:hover .listing-card-image {
+  transform: scale(1.08) !important;
+}

@@ -81,16 +81,17 @@ export default function ListingCard({ listing }: ListingCardProps) {
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 dark:border-slate-700"
+      className="group relative flex flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-slate-100 dark:border-slate-700/80 transition-shadow duration-300"
     >
       {/* Image */}
-      <div className="relative h-48 overflow-hidden">
+      <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
         {firstImage ? (
           <Image
             src={getOptimizedCloudinaryUrl(firstImage, 600)}
             alt={listing.title}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover listing-card-image"
           />
         ) : (
           <div className="w-full h-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
