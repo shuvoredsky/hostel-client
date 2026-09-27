@@ -24,7 +24,8 @@ import {
   BedDouble,
   Users,
 } from "lucide-react";
-import { getSingleListing, updateListing } from "@/services/listing.services";
+import { getSingleListing } from "@/services/listing.services";
+import { updateListing } from "@/services/listing.client.services";
 import { Switch } from "@/components/ui/switch";
 import { createListingSchema, CreateListingFormData } from "@/zod/listing.validation";
 

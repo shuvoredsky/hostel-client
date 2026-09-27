@@ -51,49 +51,7 @@ export const getSingleListing = async (id: string) => {
   }
 };
 
-// ─── Owner ────────────────────────────────────────────────────────────────────
-
-export const createListing = async (formData: FormData) => {
-  try {
-    const response = await httpClient.post<IListing>("/listings", formData);
-    return response;
-  } catch (error) {
-    console.error("Error creating listing:", error);
-    throw error;
-  }
-};
-
-export const getMyListings = async () => {
-  try {
-    const response = await httpClient.get<IListing[]>(
-      "/listings/owner/my-listings"
-    );
-    return response;
-  } catch (error) {
-    console.error("Error fetching my listings:", error);
-    throw error;
-  }
-};
-
-export const updateListing = async (id: string, formData: FormData) => {
-  try {
-    const response = await httpClient.patch<IListing>(`/listings/owner/${id}`, formData);
-    return response;
-  } catch (error) {
-    console.error("Error updating listing:", error);
-    throw error;
-  }
-};
-
-export const deleteListing = async (id: string) => {
-  try {
-    const response = await httpClient.delete<null>(`/listings/owner/${id}`);
-    return response;
-  } catch (error) {
-    console.error("Error deleting listing:", error);
-    throw error;
-  }
-};
+// ─── Owner (Moved to listing.client.services.ts for client-side execution) ────
 
 // ─── Admin ────────────────────────────────────────────────────────────────────
 
