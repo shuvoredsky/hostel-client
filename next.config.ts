@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "20mb",
+    },
+  },
   images: {
     remotePatterns: [
       {
@@ -9,7 +14,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "hostel-server-api.onrender.com",  // ← যোগ করো
+        hostname: "hostel-server-api.onrender.com",
       },
     ],
   },
